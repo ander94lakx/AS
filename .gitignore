@@ -1,0 +1,10 @@
+*.aux
+*.log
+doc/main.pyg
+*.toc
+doc/main.synctex.gz
+*.bbl
+doc/figuras/Thumbs.db
+*.out
+doc/main.lof
+*.blg

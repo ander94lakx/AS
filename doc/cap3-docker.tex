@@ -1,0 +1,236 @@
+\chapter{Docker}
+Tras haber explicado anteriormente a grandes rasgos el funcionamiento de Docker, es conveniente antes de lanzarnos a la creación del sistema saber como crear y configurar los contenedores de Docker que conformarán el sistema. En este capítulo se explicará como empezar a trabajar con Docker, desde instalarlo y como empezar a usarlo hasta como se usan los Dockerfiles para lanzar contenedores personalizados.
+
+	\section{Instalación}
+	Lo primero que haremos será instalar Docker en nuestro sistema. Como hemos comentado anteriormente, tenemos un sistema Ubuntu instalado en una máquina virtual, ya que nuestro hardware cuenta con SO Windows. Una vez dentro de Ubuntu instalar Docker es tan sencillo como seguir los siguientes pasos \cite{docker-install}:
+	
+	\lstset{language=bash, breaklines=true, basicstyle=\footnotesize}
+	\begin{enumerate}
+		\item Comprobar si tenemos curl instalado
+		\begin{lstlisting}[style=consola]
+$ which curl
+		\end{lstlisting}
+		En caso de que no este instalado, instalarlo mediante:
+		\begin{lstlisting}[style=consola]
+$ sudo apt-get update
+$ sudo apt-get install curl
+		\end{lstlisting}
+		\item Instalar Docker mediante el siguiente comando:
+		\begin{lstlisting}[style=consola]
+$ curl -sSL https://get.docker.com/ | sh
+		\end{lstlisting}
+		\item Comprobar que Docker se ha instalado correctamente.
+		\begin{lstlisting}[style=consola]
+$ docker run hello-world
+		\end{lstlisting}
+			Si ejecutamos el comando anterior y nos muestra información sobre Docker, ya hemos terminado de instalar Docker.
+	\end{enumerate}
+	
+	\section{Uso básico de Docker}
+	Para hacer uso de Docker necesitamos trabajar desde la terminal. La forma básica para trabajar con Docker es la siguiente:
+	
+	\begin{lstlisting}[style=consola]
+$ docker [subcomando de docker] [parametros]
+	\end{lstlisting}
+
+	De esa manera primero indicamos que queremos usar Docker y a continuación indicamos que es lo que queremos hacer. En el ejemplo anterior hemos usado \textit{run} para ejecutar un contenedor de Docker. Por último introducimos los diferentes parámetros. La lista completa de comandos que acepta Docker se puede ver de las siguiente manera:
+	% basicstyle=\scriptsize
+	\begin{lstlisting}[style=consola,numbers=left]
+$ docker --help
+Usage: docker [OPTIONS] COMMAND [arg...]
+docker daemon [ --help | ... ]
+docker [ --help | -v | --version ]
+
+A self-sufficient runtime for containers.
+
+Options:
+
+--config=~/.docker              Location of client config files
+-D, --debug=false               Enable debug mode
+-H, --host=[]                   Daemon socket(s) to connect to
+-h, --help=false                Print usage
+-l, --log-level=info            Set the logging level
+--tls=false                     Use TLS; implied by --tlsverify
+--tlscacert=~/.docker/ca.pem    Trust certs signed only by this CA
+--tlscert=~/.docker/cert.pem    Path to TLS certificate file
+--tlskey=~/.docker/key.pem      Path to TLS key file
+--tlsverify=false               Use TLS and verify the remote
+-v, --version=false             Print version information and quit
+
+Commands:
+attach    Attach to a running container
+build     Build an image from a Dockerfile
+commit    Create a new image from a container's changes
+cp        Copy files/folders from a container to a HOSTDIR or to STDOUT
+create    Create a new container
+diff      Inspect changes on a container's filesystem
+events    Get real time events from the server
+exec      Run a command in a running container
+export    Export a container's filesystem as a tar archive
+history   Show the history of an image
+images    List images
+import    Import the contents from a tarball to create a filesystem image
+info      Display system-wide information
+inspect   Return low-level information on a container or image
+kill      Kill a running container
+load      Load an image from a tar archive or STDIN
+login     Register or log in to a Docker registry
+logout    Log out from a Docker registry
+logs      Fetch the logs of a container
+pause     Pause all processes within a container
+port      List port mappings or a specific mapping for the CONTAINER
+ps        List containers
+pull      Pull an image or a repository from a registry
+push      Push an image or a repository to a registry
+rename    Rename a container
+restart   Restart a running container
+rm        Remove one or more containers
+rmi       Remove one or more images
+run       Run a command in a new container
+save      Save an image(s) to a tar archive
+search    Search the Docker Hub for images
+start     Start one or more stopped containers
+stats     Display a live stream of container(s) resource usage statistics
+stop      Stop a running container
+tag       Tag an image into a repository
+top       Display the running processes of a container
+unpause   Unpause all processes within a container
+version   Show the Docker version information
+wait      Block until a container stops, then print its exit code
+
+Run 'docker COMMAND --help' for more information on a command.
+	\end{lstlisting}
+	
+	Como se puede observar existen diferentes comandos que nos permitirán configurar Docker, obtener información sobre el y tratar con las imágenes y los contenedores de Docker. A continuación vamos a explicar algunos de ellos para poder empezar a trabajar con Docker. 
+	
+	El comando esencial para empezar a trabajar con Docker es el comando \textbf{\emph{run}}. Para poder lanzar directamente un contenedor de Docker, se usa el comando \textit{run}.
+	
+	\begin{lstlisting}[style=consola]
+$ docker run ubuntu:trusty
+	\end{lstlisting}
+	
+	Con el comando anterior hemos lanzado un contenedor de Docker que lleva Ubuntu. Lo primero que hace Docker para lanzar una imagen es comprobar si ya tiene en local la imagen desde la que se va a crear el contenedor. En caso de no tenerla accederá a unos repositorios llamados Docker Hub, donde se encuentran una gran cantidad de \textbf{\emph{Dockerfiles}}. Los \emph{Dockerfiles} son los archivos que sirven para generar esas imágenes (veremos más adelante como funcionan estos archivos especiales). Una vez Docker genere la imagen a partir del \textit{Dockerfile} ejecutará el contenedor, que a grandes rasgos es una instancia de la imagen. Podremos observar los contenedores Docker que tenemos lanzados mediante el comando \textbf{\emph{ps}} de Docker.
+	
+	\begin{lstlisting}[style=consola,numbers=left]
+$ docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+	\end{lstlisting}
+	
+	Aunque hemos lanzado un contenedor, mediante el comando \emph{ps} de Docker vemos que en realidad no hay ningun contenedor en ejecución. Esto es porque los contenedores de Docker solo se mantienen activos mientras el comando con el que se han iniciado este activo \cite{docker-run}. Para poder observar el comportamiento del comando \emph{ps}, vamos a crear un contenedor demonizado, un contenedor que se ejecutará indefinidamente hasta que lo paremos. Lo haremos de la siguiente manera.
+	
+	\begin{lstlisting}[style=consola]
+$ docker run -d ubuntu:14.04 /bin/sh -c "while true; do echo hello world; sleep 1; done"
+	\end{lstlisting}
+	
+	Con el \textbf{-d} lo que logramos es que se siga ejecutando el contenedor en segundo plano, como si fuera un demonio (daemon), un proceso que esta siempre en ejecución. También debemos darle algo para hacer, ya que si no, tal y como hemos comentado antes, finalizará ña ejecución. Esto lo logramos mediante un bucle infinito en shell script, que es lo que pasamos como parámetro entre comillas. Si ahora ejecutamos el comando \emph{ps}, comprobaremos que tenemos una máquina en ejecución.
+	
+	\begin{lstlisting}[style=consola,numbers=left]
+$ docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+40f5c913912e        ubuntu              "/bin/sh -c 'while tr"   2 seconds ago       Up 2 seconds                            adoring_euclid
+	\end{lstlisting}
+	
+	En caso de que queramos obtener más información sobre un contenedor de Docker, podemos usar el comando \textbf{\emph{inspect}} de Docker. La forma más básica de trabajar con este comando es la de utilizar como parámetro el ID o nombre de la maquina. este comando nos devolverá por la salida estándar un JSON con una gran cantidad de parámetros que nos indican diferentes aspectos sobre el contenedor. También se pueden obtener solo un parámetro o un grupo de parámetros en concreto. En el siguiente ejemplo se muestra su uso, para obtener toda la información y para obtener un dato, en este caso la dirección IP del contenedor.
+	
+	\begin{lstlisting}[style=consola,numbers=left]
+$ docker inspect adoring_euclid
+# ...
+# ... Se omite la salida por ser demasiado grande
+# ...
+$ docker inspect --format='{{.NetworkSettings.IPAddress}}' adoring_euclid
+172.17.0.3
+	\end{lstlisting}
+
+	En caso de que queramos matar un contenedor, podremos hacerlo mediante el comando \textbf{\emph{stop}} o mediante el comando \textbf{\emph{kill}} de Docker. El primero mata directamente el contenedor, de manera análoga al kill de linux, a diferencia del otro, que detiene la ejecución de una manera más segura.
+	
+	\begin{lstlisting}[style=consola,numbers=left]
+$ docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+40f5c913912e        ubuntu              "/bin/sh -c 'while tr"   2 seconds ago       Up 2 seconds                            adoring_euclid
+$ docker stop 40f5c913912e
+40f5c913912e
+$ docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+
+	\end{lstlisting}
+	
+	Otro comando útil a la hora de crear contenedores es el comando \textbf{\emph{images}}. El comando \textit{images} nos muestra todas las imágenes que tenemos en local. Si queremos eliminar alguna, usamos el comando \textbf{\emph{rmi}}.
+	
+	\begin{lstlisting}[style=consola,numbers=left]
+$ docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+ubuntu              latest              a005e6b7dd01        18 hours ago        188.4 MB
+ros                 latest              67110eef39cf        7 weeks ago         826.7 MB
+hello-world         latest              af340544ed62        9 weeks ago         960 B
+$ docker rmi -f hello-world
+Untagged: hello-world:latest
+Deleted: af340544ed62de0680f441c71fa1a80cb084678fed42bae393e543faea3a572c
+Deleted: 535020c3e8add9d6bb06e5ac15a261e73d9b213d62fb2c14d752b8e189b2b912
+$ docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+ubuntu              latest              a005e6b7dd01        18 hours ago        188.4 MB
+ros                 latest              67110eef39cf        7 weeks ago         826.7 MB
+	\end{lstlisting}
+	
+	\section{Creación de Dockerfiles}
+	Hasta ahora hemos visto que podemos crear contenedores Docker de una manera sencilla, pero si queremos hacer algún tipo de cambio en la configuración de estos contenedores debemos hacerlo de manera manual, accediendo a la terminal del contenedor y usando comandos. Docker provee un potentísimo sistema que nos permite automatizar las tareas de configuración de nuestras imágenes de Docker, que es el uso de Dockerfiles. En realidad, cuando nosotros llamamos al comando run de Docker y no tenemos una imagen de Docker, lo que estamos haciendo es llamar a un Dockerfile que se encuentra en el Docker Hub, y mediante él generar la imagen desde la que se creará el contenedor. De esta manera, mediante el uso de imágenes personalizadas, crearemos contenedores personalizados, con programas instalados o diferentes configuraciones realizadas en ellos.
+	
+	Los Dockerfile tienen una sintaxis especial, que nos permitirán entre otras cosas, ejecutar comandos de linux para configurar aspectos de nuestro contenedor. A continuación se muestra el Dockerfile que se usa para crear una imagen de Ubuntu \cite{ubuntu-dockerfile}.
+	
+	\begin{lstlisting}[style=consola,numbers=left]
+FROM scratch
+ADD ubuntu-trusty-core-cloudimg-amd64-root.tar.gz /
+
+# a few minor docker-specific tweaks
+# see https://github.com/docker/docker/blob/master/contrib/mkimage/debootstrap
+RUN echo '#!/bin/sh' > /usr/sbin/policy-rc.d \
+&& echo 'exit 101' >> /usr/sbin/policy-rc.d \
+&& chmod +x /usr/sbin/policy-rc.d \
+\
+&& dpkg-divert --local --rename --add /sbin/initctl \
+&& cp -a /usr/sbin/policy-rc.d /sbin/initctl \
+&& sed -i 's/^exit.*/exit 0/' /sbin/initctl \
+\
+&& echo 'force-unsafe-io' > /etc/dpkg/dpkg.cfg.d/docker-apt-speedup \
+\
+&& echo 'DPkg::Post-Invoke { "rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb /var/cache/apt/*.bin || true"; };' > /etc/apt/apt.conf.d/docker-clean \
+&& echo 'APT::Update::Post-Invoke { "rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb /var/cache/apt/*.bin || true"; };' >> /etc/apt/apt.conf.d/docker-clean \
+&& echo 'Dir::Cache::pkgcache ""; Dir::Cache::srcpkgcache "";' >> /etc/apt/apt.conf.d/docker-clean \
+\
+&& echo 'Acquire::Languages "none";' > /etc/apt/apt.conf.d/docker-no-languages \
+\
+&& echo 'Acquire::GzipIndexes "true"; Acquire::CompressionTypes::Order:: "gz";' > /etc/apt/apt.conf.d/docker-gzip-indexes
+
+# enable the universe
+RUN sed -i 's/^#\s*\(deb.*universe\)$/\1/g' /etc/apt/sources.list
+
+# overwrite this with 'CMD []' in a dependent Dockerfile
+CMD ["/bin/bash"]
+	\end{lstlisting}
+
+	Se puede observar que hay diferentes comandos en mayúscula que llaman la atención. Estos comandos son los que reconoce Docker. Con el comando \textbf{FROM} se le indica a Docker otro Dockerfile sobre el que empezar, en caso de que queramos partir de una imagen ya existente. En este caso al usar el termino \textit{scratch}, se le indica que parta desde cero. Es \emph{obligatorio} empezar siempre un Dockerfile con este comando.
+	
+	Con el comando \textbf{ADD}, se añade un archivo, indicándole donde queremos añadirlo. En este caso añade un \textit{tarball} en el que se encuentra Ubuntu. Con el comando \textbf{RUN}, se ejecuta un comando de linux. El Dockerfile de Ubuntu utiliza una serie de comandos para realizar diversas tareas, como definir repositorios. Con el comando \textbf{CMD}, se define un comportamiento por defecto a la hora de lanzar la imagen, en el caso de Ubuntu se lanza una terminal en bash.
+	
+	Existen más comandos que soportan los Dockerfiles. La lista de todos los comandos que permite Un Dockerfile es la siguiente \cite{dockerfiles-doc}:
+	\begin{itemize}
+		 \item \textbf{FROM}: Indica que Dockerfile tomar como base (\textit{scratch} para no usar ninguno)
+		 \item \textbf{MAINTAINER}: Indica quien es el encargado me mantener el Dockerfile. Normalmente se usa un nombre o una dirección de correo electrónico
+		 \item \textbf{RUN}: Sirve para ejecutar comandos
+		 \item \textbf{CMD}: Sirve para establecer la acción por defecto al lanzar un contenedor. Solo se puede usar una ver en un Dockerfile
+		 \item \textbf{LABEL}: Sirve para añadir metadatos a una imagen
+		 \item \textbf{EXPOSE}: Sirve para indicar al contenedor que puertos tiene que estar escuchando
+		 \item \textbf{ENV}: Sirve para crear variables de entorno
+		 \item \textbf{ADD}: Sirve para copiar archivos al contenedor. Permite usar URLs externas y descomprime archivos automáticamente
+		 \item \textbf{COPY}: Permite copiar archivos en local al contenedor.
+		 \item \textbf{ENTRYPOINT}: Permite configurar un contenedor para ejecutarlo como un ejecutable 
+		 \item \textbf{VOLUME}: Sirve para crear puntos de montaje dentro de un contenedor
+		 \item \textbf{USER}: Sirve para configurar el nombre de usuario o UID que se va a usar para ejecutar las instrucciones que le suceden en el Dockerfile
+		 \item \textbf{WORKDIR}: Sirve para configurar el directorio con respecto al que se van a ejecutar las instrucciones que le suceden en el Dockerfile
+		 \item \textbf{ONBUILD}: Sirve para definir instrucciones que se van a ejecutar en caso de usarse el Dockerfile como base para otro Dockerfile
+	\end{itemize}
+	
+	\section{Profundizar en Docker}
+	Aunque hemos explicado lo basico sobre docker, no es objetivo de este documento explicar el funcionamiento al detalle de Docker ni ser una guia de refrerencia a la hora de empezar a usarlo. En caso de que se quieran conocer el funcionamiento de todos los comandos de docker, la gesntión de las imágenes de Docker, o se quiera obtener mas información de Docker Hub, en la documnetación oficial de Docker \cite{docker-docs} se puede encontrar todo lo necesario para comprender al detalle el funcionamiento de Docker.
+	
+	Tras haber explicado el funcionamiento básico de Docker y algunos puntos para poder iniciarnos con él, a continuación profundizaremos en el tema de las redes en Docker, un tema esencia para poder lanzarnos a construir nuestro sistema.

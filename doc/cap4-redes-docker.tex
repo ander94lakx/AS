@@ -1,15 +1,18 @@
 \chapter{\textit{Nerworking} en Docker}
-Con Docker podemos crean una gran cantidad de contenedores diferentes que se ejecuten de manera simultánea. Es lógico que a la hora de crear un sistema queramos comunicar los contenedores entre ellos para que puedan transmitirse información. Como vamos a construir un sistema que paso mensajes entre contenedores con ROS (como usaremos ROS lo veremos en el siguiente capítulo) necesitamos crear una red entre esos contenedores. Para ello, en este capítulo se explicaran diferentes conceptos sobre configuración de redes en Docker.
+Con Docker podemos crear una gran cantidad de contenedores diferentes que se ejecuten de manera simultánea. Es lógico que a la hora de crear un sistema nos interese comunicar los contenedores entre ellos para que puedan transmitirse información. Como vamos a construir un sistema de paso mensajes entre contenedores con ROS (cómo usaremos ROS lo veremos en el siguiente capítulo) necesitamos crear una red entre esos contenedores. Para ello, en este capítulo se explicaran diferentes conceptos sobre configuración de redes en Docker.
 
 	\section{\textit{docker0}}
-	Lo primero que hay que saber es que al iniciarse Docker se crea por defecto una interfaz virtual que tiene como nombre \textbf{\emph{docker0}} en el anfitrión (host) \cite{docker-network-advanced}. Coge de manera aleatoria una dirección IP y una subred de rango privado y se la asigna a \emph{docker0}. Las direcciones MAC de los contenedores se asignan usando la dirección IP de canda contenedor, para evitar de esta manera colisiones ARP.
+	Lo primero que hay que saber es que al iniciarse Docker, por defecto, se crea en el anfitrión (host) una interfaz virtual que tiene como nombre \textbf{\emph{docker0}} \cite{docker-network-advanced}. Docker coge de manera aleatoria una dirección IP y una subred de rango privado y se la asigna a \emph{docker0}. Las direcciones MAC de los contenedores se asignan usando la dirección IP de canda contenedor, para evitar de esta manera colisiones ARP.
 	
-	Lo que hace especial a \emph{docker0}, es que no solo es una interfaz, sino que es un puente Ethernet virtual que redirige automáticamente los paquetes entre cualquier otra interfaz que esté conectadas a él. De esta manera se pueden comunicar tanto los contenedores entre ellos como con el host.
+	Lo que hace especial a \emph{docker0}, es que no solo es una interfaz, sino que es un puente Ethernet virtual que redirige automáticamente los paquetes entre cualquier otra interfaz que esté conectada a él. De esta manera se pueden comunicar tanto los contenedores entre ellos como con el host.
 	
-	Además pueden comunicarse con el exterior pudiendo acceder a internet desde ellos. En el capitulo anterior lanzamos contenedores que se creaban mediante los Dockerfiles que se obtenían del Docker Hub, que es un servidor web que se encuentra en internet. Sin embargo, \textbf{no} podemos desde acceder a los contenedores desde fuera, desde internet. Por defecto está establecido así por temas de seguridad, aunque obviamente se puede cambiar.
+	Además desde un contenedor también se puede acceder a internet. En el capítulo anterior lanzamos contenedores que se creaban mediante los Dockerfiles que se obtenían del Docker Hub, que es un servidor web que se encuentra en internet. 
+	
+	Sin embargo, \textbf{no} podemos acceder a los contenedores desde fuera, desde internet. Por defecto está 
+	establecido así, principalmente por temas de seguridad, aunque obviamente se puede cambiar.
 	
 	\section{Ping entre contenedores}
-	Si podemos 
+	Si todos los contenedores que creamos se encuentran en una misma subred, podemos comunicarnos entre ellos simplemente con sus direcciones IP privadas o sus nombres de red. La forma más sencilla para probar la comunicación entre dos sistemas es el uso de la herramienta ping de linux.
 	
 	Vamos a lanzar por una parte dos contenedores Docker en dos terminales separadas. Para esta prueba usaremos la misma imagen que vamos a usar para crear nuestro sistema, que es la imagen \emph{osrf/ros:indigo-desktop}, a la que previamente hemos hecho un \emph{pull} para tenerla generada, ya que ocupa alrededor de 1,6 GB. Creamos los contenedores de la siguiente manera.
 	
@@ -26,7 +29,7 @@ CONTAINER ID        IMAGE                     COMMAND                  CREATED  
 2f3c19da0cb8        osrf/ros:indigo-desktop   "/ros_entrypoint.sh /"   16 seconds ago      Up 16 seconds                           grave_mahavira
 	\end{lstlisting}
 	
-	Podemos obtener la dirección IP de un contenedor tanto desde fuera como desde dentro de Docker. En este caso lo haremos desde fuera mediante el \emph{imspect} de Docker.
+	Podemos obtener la dirección IP de un contenedor tanto desde fuera como desde dentro de Docker. En este caso lo haremos desde fuera mediante el \emph{inspect} de Docker.
 	
 	\begin{lstlisting}[style=consola,numbers=left]
 $ docker inspect --format='{{.NetworkSettings.IPAddress}}' compassionate_mccarthy
@@ -52,7 +55,7 @@ PING 172.17.0.5 (172.17.0.5) 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.058/0.084/0.135/0.028 ms
 	\end{lstlisting}
 	
-	Se puede hacer exactamente lo mismo con los nombres de los contenedore docker ya que esto son los nombres que se le dan en la red \emph{docker0} a la que están conectados. En este caso haremos un ping desde \textit{compassionate\_mccarthy} a textit{grave\_mahavira} usando para ello el nombre del contenedor.
+	Se puede hacer exactamente lo mismo con los nombres de los contenedore docker ya que esto son los nombres que se le dan en la red \emph{docker0} a la que están conectados. En este caso haremos un ping desde \textit{compassionate\_mccarthy} a \textit{grave\_mahavira} usando para ello el nombre del contenedor.
 	
 	\begin{lstlisting}[style=consola,numbers=left]
 root@829a49bb2cfa:/# ping grave_mahavira
@@ -69,10 +72,10 @@ PING grave_mahavira (172.17.0.4) 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.064/0.069/0.087/0.010 ms
 	\end{lstlisting}
 	
-	Debido a esto los nombres que se usan en los contendores deben ser \textbf{únicos}, y debemos tenerlo en cuanta a la hora de renombrar los contenedores. Tampoco podemos cambiar el nombre de un  contenedor durante su ejecucíon, solo podremos nombrarlo al lanzarlo.
+	Debido a esto, los nombres que se usan en los contendores deben ser \textbf{únicos}. Debemos tenerlo en cuanta a la hora de renombrar los contenedores. Tampoco podemos cambiar el nombre de un  contenedor durante su ejecucíon, solo podremos nombrarlo al lanzarlo.
 	
 	\section{Links entre contenedores}
-	Como hemos visto, como tenemos los contenedores dentro de una red privada comunicarlos entre ellos es algo trivial. El problema de transmitir información de esta manera es que al interfaz \emph{docker0} se usa para \textbf{todos} los contenedores que estén en ejecución en ese host. Si queremos realizar una comunicación privada entre dos contenedores, que sea invisible para el resto de contenedores, debemos usar el mecanismo que provee Docker, el linkado de contenedores \cite{docker-network-linking}.
+	Como hemos visto, a causa de tener los contenedores dentro de una red privada, comunicarlos entre ellos es algo trivial. El problema de transmitir información de esta manera es que el interfaz \emph{docker0} se usa para \textbf{todos} los contenedores que estén en ejecución en ese host. Si queremos realizar una comunicación privada entre dos contenedores, que sea invisible para el resto de contenedores, debemos usar el mecanismo que provee Docker, el linkado de contenedores \cite{docker-network-linking}.
 	
 	Docker provee también un sistema para mapear puertos entre dos contenedores, aunque el mejor sistema que podemos usar para conectar contendores el el linkado, ya que abstrae todo el sistema de puertos, y crea un puente virtual que permite una comunicación segura entre los contenedores.
 	
@@ -107,11 +110,11 @@ $ docker inspect -f "{{ .HostConfig.Links }}" ros2
 	Todo esto lo realiza de manera automática a la hora de enlazar dos contenedores.
 	
 	\section{Configuración de redes de manera tradicional}
-	Aunque en este capitulo se han enseñado varios mecanismos que provee Docker para administrar redes de contenedores, también podemos configurar toda nuestra red de una manera más tradicional, mediante la modificación de archivos como \emph{/etc/hosts} o \emph{/etc/interfaces} en nuestros contenedores, el uso de \emph{Iptables}, cofiguración de DNS, uso de IPv6,... 
+	Aunque en este capítulo se han enseñado varios mecanismos que provee Docker para administrar redes de contenedores, también podemos configurar toda nuestra red de una manera más tradicional, mediante la modificación de archivos como \emph{/etc/hosts} o \emph{/etc/interfaces} en nuestros contenedores, el uso de \emph{Iptables}, cofiguración de DNS,... 
 	
 	Docker mediante estos mecanismos busca abstraer parte de la configuración para hacerla mas sencilla de cara al desarrollador o al administrador.
 	
-	Prácticamente cualquier aspecto relacionado con las redes se puede configurar en Docker mediante una serie de flags especiales a la hora de lanzar el servicio de Docker, por lo que no se pueden modificar mientras Docker este en ejecución (no confundir con que un contenedor este e ejecución). Algunos de esos comandos con flags especiales solo se pueden ejecutar con el servicio de Docker parado. Algunos de los mas importantes son.
+	Prácticamente cualquier aspecto relacionado con las redes se puede configurar en Docker mediante una serie de flags especiales a la hora de lanzar el servicio de Docker, por lo que no se pueden modificar mientras Docker esté en ejecución (no confundir con que un contenedor esté en ejecución). Algunos de esos comandos con flags especiales solo se pueden ejecutar con el servicio de Docker parado. Varios de los mas importantes son.
 	
 	\begin{lstlisting}[style=consola,numbers=left]
 --default-gateway=IP_ADDRESS # Define la IP a la que se conectaran los contenedores de Docker al crearse, por defecto se usa la de docker0

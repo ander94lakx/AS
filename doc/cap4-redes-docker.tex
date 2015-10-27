@@ -1,4 +1,4 @@
-\chapter{\textit{Nerworking} en Docker}
+\chapter{Nerworking en Docker}
 Con Docker podemos crear una gran cantidad de contenedores diferentes que se ejecuten de manera simultánea. Es lógico que a la hora de crear un sistema nos interese comunicar los contenedores entre ellos para que puedan transmitirse información. Como vamos a construir un sistema de paso mensajes entre contenedores con ROS (cómo usaremos ROS lo veremos en el siguiente capítulo) necesitamos crear una red entre esos contenedores. Para ello, en este capítulo se explicaran diferentes conceptos sobre configuración de redes en Docker.
 
 	\section{\textit{docker0}}
@@ -109,8 +109,114 @@ $ docker inspect -f "{{ .HostConfig.Links }}" ros2
 	
 	Todo esto lo realiza de manera automática a la hora de enlazar dos contenedores.
 	
-	\section{Configuración de redes de manera tradicional}
-	Aunque en este capítulo se han enseñado varios mecanismos que provee Docker para administrar redes de contenedores, también podemos configurar toda nuestra red de una manera más tradicional, mediante la modificación de archivos como \emph{/etc/hosts} o \emph{/etc/interfaces} en nuestros contenedores, el uso de \emph{Iptables}, cofiguración de DNS,... 
+	\section{\textit{network} de Docker}
+	
+	\textit{\footnotesize \textbf{NOTA:} el contenido de toda esta sección se basa en la versión de la rama experimental de Docker. A día de hoy (27 de octubre de 2015) esta funcionalidad no se encuentra en la versión estable de Docker, que es la 1.8.3. La versión utilizada para la explicación es la versión 1.9.0-dev (build b92df9f), de la rama de desarrollo.}
+
+	En la rama experimental de Docker, se encuentra una funcionalidad que lleva gestándose desde que salió la versión 1.7 de Docker. Esta nueva funcionalidad permite crear redes con diferentes topologías de una manera sencilla, abstrayendo de configuraciones, al igual que los links de Docker. A diferencia de los links de Docker, que está más orientados a conectar directamente contenedores, esta nueva función permite crear redes virtuales enteras.
+	
+	La forma de trabajar con esta funcionalidad es mediante el uso del comando \textit{\emph{network}}.
+	
+	\begin{lstlisting}[style=consola]
+$ docker network --help
+
+Usage:	docker network [OPTIONS] COMMAND [OPTIONS]
+
+Commands:
+disconnect               Disconnect container from a network
+inspect                  Display detailed network information
+ls                       List all networks
+rm                       Remove a network
+create                   Create a network
+connect                  Connect container to a network
+
+Run 'docker network COMMAND --help' for more information on a command.
+
+--help=false       Print usage
+	\end{lstlisting}
+	
+	\subsection{Prueba de \textit{network} con nodos ROS}
+
+% WORKING ON PROGRESS --------------------------------------------------------------------
+
+	Para probar el funcionamiento del comando \emph{network}, vamos a hacer algo diferente. vamos a hacer uso de máquinas ROS pero con una serie de tutoriales instalados que no spermitirán probar el funcionamiento del comando. Para generar la imagen partiremos del siguiente Dockerfile.
+
+	\begin{lstlisting}[style=consola,numbers=left]
+FROM ros:indigo-ros-base
+# install ros tutorials packages
+RUN apt-get update && apt-get install -y
+            ros-indigo-ros-tutorials \
+            ros-indigo-common-tutorials \
+            && rm -rf /var/lib/apt/lists/
+	\end{lstlisting}
+	
+	A partir del Dockerfile generamos la imagen de la siguiente manera.
+
+	\begin{lstlisting}[style=consola]
+$ docker build --tag ros:ros-tutorials .
+	\end{lstlisting}
+
+	A continuación vamos a crear la red. Para ello tenemos que usar el subcomando \emph{create} de \emph{network}. Lo haremos de la siguiente manera.
+
+	\begin{lstlisting}[style=consola]
+docker network create red_ros
+dd9a08f95ed51940155daf4b9c2048bae3de5fbcc48a439fa88edefd775dcc52
+	\end{lstlisting}
+	
+	Tras haber creado la red, procedemos a crear los nodos que conformarán la misma. Estos nodos serán contenedores ROS instanciados a partir de la imagen generada anteriormente.
+	
+	En desarrollo...
+	
+\iffalse
+	
+%Now that we have a network, we can create services. Services advertise there location on the network, making it easy to resolve the location/address of the service specific container. We'll use this make sure our ROS nodes can find and connect to our ROS master.
+
+%Run services
+%To create a container for the ROS master and advertise it's service:
+
+	El primer nodo que crearemos será el nodo maestro (\emph{master}). Este será el que ejecute \emph{roscore}, que se necesario para que ROS funcione.
+
+	\begin{lstlisting}[style=consola,numbers=left]
+$ docker run -it --rm \
+             --publish-service=master.red_ros \
+             --name master \
+             ros:ros-tutorials \
+             roscore
+	\end{lstlisting}
+	
+%Now you can see that master is running and is ready manage our other ROS nodes. To add our talker node, we'll need to point the relevant environment variable to the master service:
+
+	El segundo nodo que crearemos sera uno que haga la función de generar los mensajes, conocido como \emph{talker}. Lo crearemos de la siguiente manera.
+		
+	\begin{lstlisting}[style=consola,numbers=left]
+$ docker run -it --rm\
+             --publish-service=talker.red_ros \
+             --env ROS_HOSTNAME=talker \
+             --env ROS_MASTER_URI=http://master:11311 \
+             --name talker \
+             ros:ros-tutorials \
+             rosrun roscpp_tutorials talker
+	\end{lstlisting}
+	
+%Then in another terminal, run the listener node similarly:
+
+	Si acabamos de crear un nodo que habla, lo lógico sería crear un nodo que escuche. Este tipo de nodo será el \emph{listener}, y lo crearemos de la siguiente manera.
+
+	\begin{lstlisting}[style=consola,numbers=left]
+$ docker run -it --rm\
+             --publish-service=listener.red_ros \
+             --env ROS_HOSTNAME=listener \
+             --env ROS_MASTER_URI=http://master:11311 \
+             --name listener \
+             ros:ros-tutorials \
+             rosrun roscpp_tutorials listener
+	\end{lstlisting}
+
+\fi
+%-----------------------------------------------------------------------------------------
+	
+	\section{Configuración manual de redes}
+	Aunque en este capítulo se han enseñado varios mecanismos que provee Docker para administrar redes de contenedores, también podemos configurar toda nuestra red de una manera más tradicional, mediante la modificación de archivos como \emph{/etc/hosts} o \emph{/etc/interfaces} en nuestros contenedores, el uso de \emph{Iptables}, configuración de DNS,... 
 	
 	Docker mediante estos mecanismos busca abstraer parte de la configuración para hacerla mas sencilla de cara al desarrollador o al administrador.
 	

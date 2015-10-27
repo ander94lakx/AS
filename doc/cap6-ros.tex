@@ -1,0 +1,19 @@
+\chapter{ROS}
+Anteriormente se ha explicado qué es ROS y que características tiene. En este capitulo se pasara a profundizar en su funcionamiento, y mostraremos como se pueden programar los sistemas de paso de mensajes que pasaremos a implementar en nuestro sistema de contenedores Docker anteriormente creado.
+
+	\section{Entorno de trabajo}
+	Para poder trabajar con ROS lo primero que debemos tener es un entorno con las herramientas de ROS instaladas. En este caso, como vamos a usar contenedores Docker con todo lo necesario en ellos no necesitaremos instalar ningún tipo de paquete adicional. El Dockerfile que vamos a usar para generar la imagen Ubuntu con ROS ya instalado se encuentra disponible en el Docker Hub y aparece con el nombre \emph{osrf/ros:indigo-desktop}. Esta imagen contiene \cite{ros-installation}:
+	\begin{itemize}
+		\item \emph{ros-base}), la base de ROS, que a su vez contiene:
+		\begin{itemize}
+			\item \emph{ros-core}, el núcleo de ROS
+			\item Librerías para construir aplicaciones
+			\item Librerías para comunicación
+		\end{itemize}
+		\item \emph{rqt}, framework basado en Qt para construir aplicaciones con interfaz gráfica de usuario (GUI) con ROS
+		\item \emph{rviz}, herramienta de visualización 3D para ROS
+		\item Librerías genéricas para sistemas robóticos
+		
+	\end{itemize}
+	
+	De momento no vamos a hacer uso de ninguna herramienta gráfica. Para probar el funcionamiento de ROS sobre nuestro sistema vamos a elaborar una pequeña aplicación distribuida que nos permita enviar unos datos de un nodo a otro. En ROS existe una metodología de paso de mensajes que se conoce como \emph{Publisher-Subscriber}. Está metodología consiste en dos nodos, uno conocido como \emph{Publisher} que va publicando mensajes. Éste nodo no decide a quién se mandan los mensajes, sino que el otro nodo, el nodo \emph{Subscriber}, tal y como su nombre indica, se suscribe al nodo que publica los mensajes, y a partir de ese momento recibe los mensajes que va publicando.

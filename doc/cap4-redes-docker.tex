@@ -141,14 +141,7 @@ Run 'docker network COMMAND --help' for more information on a command.
 
 	Para probar el funcionamiento del comando \emph{network}, vamos a hacer algo diferente. vamos a hacer uso de máquinas ROS pero con una serie de tutoriales instalados que no spermitirán probar el funcionamiento del comando. Para generar la imagen partiremos del siguiente Dockerfile.
 
-	\begin{lstlisting}[style=consola,numbers=left]
-FROM ros:indigo-ros-base
-# install ros tutorials packages
-RUN apt-get update && apt-get install -y
-            ros-indigo-ros-tutorials \
-            ros-indigo-common-tutorials \
-            && rm -rf /var/lib/apt/lists/
-	\end{lstlisting}
+	\lstinputlisting[style=consola,numbers=left]{../Dockerfiles/ros-tutorials/Dockerfile.}
 	
 	A partir del Dockerfile generamos la imagen de la siguiente manera.
 

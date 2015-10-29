@@ -158,10 +158,7 @@ dd9a08f95ed51940155daf4b9c2048bae3de5fbcc48a439fa88edefd775dcc52
 	
 	Tras haber creado la red, procedemos a crear los nodos que conformarán la misma. Estos nodos serán contenedores ROS instanciados a partir de la imagen generada anteriormente.
 	
-	En desarrollo...
-	
-\iffalse
-	
+{\color{red}
 %Now that we have a network, we can create services. Services advertise there location on the network, making it easy to resolve the location/address of the service specific container. We'll use this make sure our ROS nodes can find and connect to our ROS master.
 
 %Run services
@@ -204,8 +201,10 @@ $ docker run -it --rm\
              ros:ros-tutorials \
              rosrun roscpp_tutorials listener
 	\end{lstlisting}
+	
+	En desarrollo...
+}
 
-\fi
 %-----------------------------------------------------------------------------------------
 	
 	\section{Configuración manual de redes}

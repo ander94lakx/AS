@@ -1,39 +1,32 @@
-% IMPORTANTE:
-% Para poner barrabaja en una url hay que cambiar '_' por '\textunderscore'
 
-\documentclass[a4paper,12pt,oneside]{book}
+\documentclass[a4paper,12pt,oneside]{scrbook}
 
-% Paquetes
-\usepackage[spanish]{babel} % Indicar idioma español
-\usepackage[utf8]{inputenc} % Poder poner tildes directamente
-\usepackage{graphicx} % Para imcuir gráficos
-\usepackage{cite} % Para crear referencias
-\usepackage{svg} % Para usar imágenes en formato vectorial
-\usepackage{float} % Para modificar como aparecen las imagenes
-\usepackage{listings} % Para introducir código
-\usepackage{times}
-\usepackage{color} % para añadir colores
-\usepackage{hyperref}  % Para que se creen enlaces en el documento (a otras partes o a la web)
-\usepackage{AnonymousPro}
-\usepackage{url}
+%----------------------------------------------------------------------------------------
+% PAQUETES Y ESTILO
+%----------------------------------------------------------------------------------------
 
-% Estilo
-\include{estilo}
+\include{setup}
 
-% Información del documento
+%----------------------------------------------------------------------------------------
+% INFORMACION DEL DOCUMENTO
+%----------------------------------------------------------------------------------------
+
 \title{Sistema embebido para el control de un vehículo robotizado usando ROS y Docker}
 \author{Julen Aristimuño \and Ander Granado \and Joseba Ruiz}
 \date{\today}
 
-
+%========================================================================================
+% DOCUMENTO
+%----------------------------------------------------------------------------------------
 \begin{document}
 
 \frontmatter % Define la parte inicial del libro, que suele ir compuesto por:
 
-\maketitle % Titulo del documento
+\include{titulo} % Título personalizado
 \tableofcontents % Indice de contenidos
 \listoffigures % Indice de figuras
 
+%----------------------------------------------------------------------------------------
 
 \mainmatter % Define la parte frincipal del libro, el contenido
 
@@ -49,6 +42,7 @@
 
 \include{cap6-ros}
 
+%----------------------------------------------------------------------------------------
 
 \backmatter
 
@@ -57,3 +51,4 @@
 \bibliography{biblio}
 
 \end{document}
+%========================================================================================

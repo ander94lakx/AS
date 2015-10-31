@@ -1,0 +1,112 @@
+% IMPORTANTE
+% Para poner barrabaja en una url hay que cambiar '_' por '\textunderscore'
+
+%========================================================================================
+% PAQUETES
+%========================================================================================
+
+\usepackage[spanish]{babel} % Indicar idioma español
+\usepackage[utf8]{inputenc} % Poder poner tildes directamente
+\usepackage{graphicx} % Para incluir gráficos
+\usepackage{cite} % Para crear referencias
+\usepackage{svg} % Para usar imágenes en formato vectorial
+\usepackage{float} % Para modificar como aparecen las imagenes
+\usepackage{listings} % Para introducir código
+\usepackage{times}
+\usepackage{color} % para añadir colores
+\usepackage{hyperref}  % Para que se creen enlaces en el documento (a otras partes o a la web)
+\usepackage{AnonymousPro}
+\usepackage{url}
+\usepackage[Bjornstrup]{fncychap} % Para poner los títulos de los capítulos más bonitos
+\usepackage{fancyhdr} % Para configurar las cabeceras y los piés de página
+\usepackage{titling} % Para usar la información del documento en otras partes de él
+
+%========================================================================================
+% ESTILO
+%========================================================================================
+
+%----------------------------------------------------------------------------------------
+% TIPOGRAFIA
+%----------------------------------------------------------------------------------------
+
+\renewcommand{\familydefault}{\sfdefault} % Cambia la tipografía de todo el documento
+\setlength{\parskip}{2mm} % Define la distancia entre parrafos (por defecto = 0)
+
+%----------------------------------------------------------------------------------------
+% CABECERAS Y PIES DE PAGINA
+%----------------------------------------------------------------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[CE,CO]{\leftmark}
+\fancyhead[LE,RO]{\thepage}
+\fancyfoot[RE,LO]{Julen Aristimuño, Ander Granado, Joseba Ruiz}
+\fancyfoot[LE,RO]{\thepage}
+
+\renewcommand{\headrulewidth}{2pt}
+\renewcommand{\footrulewidth}{1pt}
+
+%----------------------------------------------------------------------------------------
+% ENLACES
+%----------------------------------------------------------------------------------------
+
+\hypersetup{
+	colorlinks,
+	citecolor=black,
+	filecolor=black,
+	linkcolor=black,
+	urlcolor=black
+}
+
+%----------------------------------------------------------------------------------------
+% NUMERO DE PROFUNDIDAD DE NUMERACION DE CONENIDOS
+%----------------------------------------------------------------------------------------
+\setcounter{tocdepth}{2}
+\setcounter{secnumdepth}{2}
+
+%----------------------------------------------------------------------------------------
+% CODIGO
+%----------------------------------------------------------------------------------------
+
+\definecolor{gray95}{gray}{.95}
+\definecolor{gray85}{gray}{.80}
+\definecolor{gray45}{gray}{.45}
+\definecolor{myturquoise}{RGB}{0, 128, 128}
+
+\lstset{ 
+	frame=Ltb,
+	framerule=0pt,
+	aboveskip=0.5cm,
+	framextopmargin=3pt,
+	framexbottommargin=3pt,
+	framexleftmargin=0.2cm,
+	framesep=0pt,
+	rulesep=2.0pt,
+	backgroundcolor=\color{gray95},
+	rulesepcolor=\color{black},
+	%
+	stringstyle=\ttfamily,
+	showstringspaces = false,
+	basicstyle=\small\ttfamily,
+	commentstyle=\color{gray45},
+	keywordstyle=\bfseries,
+	%
+	numbers=left,
+	numbersep=15pt,
+	numberstyle=\tiny,
+	numberfirstline = false,
+	breaklines=true,
+}
+
+% Minimizar fragmentado de listados
+\lstnewenvironment{listing}[1][]
+{\lstset{#1}\pagebreak[0]}{\pagebreak[0]}
+
+% Estilo de codigo para la consola
+\lstdefinestyle{consola}{
+	language=bash,
+	breaklines=true,
+	basicstyle=\footnotesize\bf\ttfamily,
+	backgroundcolor=\color{gray85},
+	rulesepcolor=\color{myturquoise},
+	numbers=none,
+}

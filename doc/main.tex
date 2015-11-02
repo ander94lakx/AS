@@ -5,7 +5,7 @@
 % PAQUETES Y ESTILO
 %----------------------------------------------------------------------------------------
 
-\include{setup}
+\include{tex/setup}
 
 %----------------------------------------------------------------------------------------
 % INFORMACION DEL DOCUMENTO
@@ -22,25 +22,27 @@
 
 \frontmatter % Define la parte inicial del libro, que suele ir compuesto por:
 
-\include{titulo} % Título personalizado
+\include{tex/titulo} % Título personalizado
 \tableofcontents % Indice de contenidos
 \listoffigures % Indice de figuras
 
 %----------------------------------------------------------------------------------------
 
 \mainmatter % Define la parte frincipal del libro, el contenido
+\part{Introducción}
+	\include{tex/objetivo}
+	\include{tex/herramientas}
 
-\include{cap1-introduccion}
+\part{Docker}
+	\include{tex/docker}
+	\include{tex/redes-docker}
 
-\include{cap2-herramientas}
-
-\include{cap3-docker}
-
-\include{cap4-redes-docker}
-
-\include{cap5-creacion-sistema}
-
-\include{cap6-ros}
+\part{ROS}
+	\include{tex/ros}
+	\include{tex/prueba-ros}
+	
+\part{implementación del sistema}
+	\include{tex/creacion-sistema}
 
 %----------------------------------------------------------------------------------------
 

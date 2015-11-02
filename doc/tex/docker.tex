@@ -103,6 +103,7 @@ Run 'docker COMMAND --help' for more information on a command.
 	
 	Como se puede observar existen diferentes comandos que nos permitirán configurar Docker, obtener información sobre el y tratar con las imágenes y los contenedores de Docker. A continuación vamos a explicar algunos de ellos para poder empezar a trabajar con Docker. 
 	
+	\subsection{\textit{run}}
 	El comando esencial para empezar a trabajar con Docker es el comando \textbf{\emph{run}}. Para poder lanzar directamente un contenedor de Docker, se usa el comando \textit{run}.
 	
 	\begin{lstlisting}[style=consola]
@@ -111,6 +112,7 @@ $ docker run ubuntu:trusty
 	
 	Con el comando anterior hemos lanzado un contenedor de Docker que lleva Ubuntu. Lo primero que hace Docker para lanzar una imagen es comprobar si ya tiene en local la imagen desde la que se va a crear el contenedor. En caso de no tenerla accederá a unos repositorios llamados Docker Hub, donde se encuentran una gran cantidad de \textbf{\emph{Dockerfiles}}. Los \emph{Dockerfiles} son los archivos que sirven para generar esas imágenes (veremos más adelante como funcionan estos archivos especiales). Una vez Docker genere la imagen a partir del \textit{Dockerfile} ejecutará el contenedor, que a grandes rasgos es una instancia de la imagen.
 	
+	\subsection{\textit{ps}}
 	Podremos observar los contenedores Docker que tenemos lanzados mediante el comando \textbf{\emph{ps}} de Docker.
 	
 	\begin{lstlisting}[style=consola,numbers=left]
@@ -118,7 +120,11 @@ $ docker ps
 CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
 	\end{lstlisting}
 	
-	Aunque hemos lanzado un contenedor, mediante el comando \emph{ps} de Docker vemos que en realidad no hay ningún contenedor en ejecución. Esto es porque los contenedores de Docker solo se mantienen activos mientras el comando con el que se han iniciado este activo \cite{docker-run}. Para poder observar el comportamiento del comando \emph{ps}, vamos a crear un contenedor demonizado, un contenedor que se ejecutará indefinidamente hasta que lo paremos. Lo haremos de la siguiente manera.
+	Aunque hemos lanzado un contenedor, mediante el comando \emph{ps} de Docker vemos que en realidad no hay ningún contenedor en ejecución. Si no le indicamos ningún parámetro al comando \emph{ps}, solo nos mostrará los contendores en ejecución. Para mostrar todos, se hace uso hay que indicarselo con \emph{-a}.
+	
+	Si nosotros hemos lanzado un contenedor, ¿Porqué no se está ejecutando? Esto es porque los contenedores de Docker solo se mantienen en ejecución mientras el comando con el que se han iniciado este activo \cite{docker-run}.
+	
+	Para poder probar el comportamiento por defecto del comando \emph{ps}, vamos a crear un contenedor demonizado, un contenedor que se ejecutará indefinidamente hasta que lo paremos. Esto es muy habitual en Docker, ya que las aplicaciones hechas con Docker suelen diseñarse para funcionar 24/7, como por ejemplo servidores web. Lo haremos de la siguiente manera.
 	
 	\begin{lstlisting}[style=consola]
 $ docker run -d ubuntu:14.04 /bin/sh -c "while true; do echo hello world; sleep 1; done"
@@ -132,6 +138,7 @@ CONTAINER ID        IMAGE               COMMAND                  CREATED        
 40f5c913912e        ubuntu              "/bin/sh -c 'while tr"   2 seconds ago       Up 2 seconds                            adoring_euclid
 	\end{lstlisting}
 	
+	\subsection{\textit{inspect}}
 	En caso de que queramos obtener más información sobre un contenedor de Docker, podemos usar el comando \textbf{\emph{inspect}} de Docker. La forma más básica de trabajar con este comando es la de utilizar como parámetro el ID o nombre de la maquina. Este comando nos devolverá por la salida estándar un JSON con una gran cantidad de parámetros que nos indican diferentes aspectos sobre el contenedor. También se pueden obtener solo un parámetro o un grupo de parámetros en concreto. En el siguiente ejemplo se muestra su uso, para obtener toda la información y para obtener un dato, en este caso la dirección IP del contenedor.
 	
 	\begin{lstlisting}[style=consola,numbers=left]
@@ -143,6 +150,7 @@ $ docker inspect --format='{{.NetworkSettings.IPAddress}}' adoring_euclid
 172.17.0.3
 	\end{lstlisting}
 
+	\subsection{\textit{stop} y \textit{kill}}
 	En caso de que queramos matar un contenedor, podremos hacerlo mediante el comando \textbf{\emph{stop}} o mediante el comando \textbf{\emph{kill}} de Docker. El primero mata directamente el contenedor, de manera análoga al kill de linux, a diferencia del otro, que detiene la ejecución de una manera más segura.
 	
 	\begin{lstlisting}[style=consola,numbers=left]
@@ -156,6 +164,31 @@ CONTAINER ID        IMAGE               COMMAND                  CREATED        
 
 	\end{lstlisting}
 	
+	\subsection{\textit{rm}}
+	Hay que tener en cuenta que ni stop ni kill eliminan el contenedor, sino que detienen su ejecución. El contenedor, junto con toda la información que tiene, sigue almacenado. Si queremos eliminar un contenedor definitivamente lo que debemos hacer es usar el comando \textbf{\emph{rm}} de Docker.
+	
+	\begin{lstlisting}[style=consola,numbers=left]
+$ docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+$ docker run -d ubuntu:14.04 /bin/sh -c "while true; do echo hello world; sleep 1; done"
+5abaece69cbd445e69cae61cef6de9f42e2561eacb4b8969024c922eec348a5d
+$ docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+5abaece69cbd        ubuntu:14.04        "/bin/sh -c 'while tr"   3 seconds ago       Up 2 seconds                            mad_ardinghelli
+$ docker stop mad_ardinghelli
+mad_ardinghelli
+$ docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+$ docker ps -a
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS                       PORTS               NAMES
+5abaece69cbd        ubuntu:14.04        "/bin/sh -c 'while tr"   5 minutes ago       Exited (137) 4 minutes ago                       mad_ardinghelli
+$ docker rm mad_ardinghelli
+mad_ardinghelli
+$ docker ps -a
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS                       PORTS               NAMES
+	\end{lstlisting}	
+	
+	\subsection{\textit{images} y \textit{rmi}}
 	Otro comando útil a la hora de gestionar Docker es el comando \textbf{\emph{images}}. El comando \textit{images} nos muestra todas las imágenes que tenemos en local. Si queremos eliminar alguna, usamos el comando \textbf{\emph{rmi}}.
 	
 	\begin{lstlisting}[style=consola,numbers=left]

@@ -1,0 +1,226 @@
+\chapter{Nerworking en Docker}
+Con Docker podemos crear una gran cantidad de contenedores diferentes que se ejecuten de manera simultánea. Es lógico que a la hora de crear un sistema nos interese comunicar los contenedores entre ellos para que puedan transmitirse información. Como vamos a construir un sistema de paso mensajes entre contenedores con ROS (cómo usaremos ROS lo veremos en el siguiente capítulo) necesitamos crear una red entre esos contenedores. Para ello, en este capítulo se explicaran diferentes conceptos sobre configuración de redes en Docker.
+
+	\section{\textit{docker0}}
+	Lo primero que hay que saber es que al iniciarse Docker, por defecto, se crea en el anfitrión (host) una interfaz virtual que tiene como nombre \textbf{\emph{docker0}} \cite{docker-network-advanced}. Docker coge de manera aleatoria una dirección IP y una subred de rango privado y se la asigna a \emph{docker0}. Las direcciones MAC de los contenedores se asignan usando la dirección IP de canda contenedor, para evitar de esta manera colisiones ARP.
+	
+	Lo que hace especial a \emph{docker0}, es que no solo es una interfaz, sino que es un puente Ethernet virtual que redirige automáticamente los paquetes entre cualquier otra interfaz que esté conectada a él. De esta manera se pueden comunicar tanto los contenedores entre ellos como con el host.
+	
+	Además desde un contenedor también se puede acceder a internet. En el capítulo anterior lanzamos contenedores que se creaban mediante los Dockerfiles que se obtenían del Docker Hub, que es un servidor web que se encuentra en internet. 
+	
+	Sin embargo, \textbf{no} podemos acceder a los contenedores desde fuera, desde internet. Por defecto está 
+	establecido así, principalmente por temas de seguridad, aunque obviamente se puede cambiar.
+	
+	\section{Ping entre contenedores}
+	Si todos los contenedores que creamos se encuentran en una misma subred, podemos comunicarnos entre ellos simplemente con sus direcciones IP privadas o sus nombres de red. La forma más sencilla para probar la comunicación entre dos sistemas es el uso de la herramienta ping de linux.
+	
+	Vamos a lanzar por una parte dos contenedores Docker en dos terminales separadas. Para esta prueba usaremos la misma imagen que vamos a usar para crear nuestro sistema, que es la imagen \emph{osrf/ros:indigo-desktop}, a la que previamente hemos hecho un \emph{pull} para tenerla generada, ya que ocupa alrededor de 1,6 GB. Creamos los contenedores de la siguiente manera.
+	
+	\begin{lstlisting}[style=consola]
+$ docker run -it osrf/ros:indigo-desktop /bin/bash
+	\end{lstlisting}
+	
+	Desde fuera comprobamos que tenemos los contenedores en ejecución.
+	
+	\begin{lstlisting}[style=consola,numbers=left]
+$ docker ps
+CONTAINER ID        IMAGE                     COMMAND                  CREATED             STATUS              PORTS               NAMES
+829a49bb2cfa        osrf/ros:indigo-desktop   "/ros_entrypoint.sh /"   6 seconds ago       Up 6 seconds                            compassionate_mccarthy
+2f3c19da0cb8        osrf/ros:indigo-desktop   "/ros_entrypoint.sh /"   16 seconds ago      Up 16 seconds                           grave_mahavira
+	\end{lstlisting}
+	
+	Podemos obtener la dirección IP de un contenedor tanto desde fuera como desde dentro de Docker. En este caso lo haremos desde fuera mediante el \emph{inspect} de Docker.
+	
+	\begin{lstlisting}[style=consola,numbers=left]
+$ docker inspect --format='{{.NetworkSettings.IPAddress}}' compassionate_mccarthy
+172.17.0.5
+$ docker inspect --format='{{.NetworkSettings.IPAddress}}' grave_mahavira
+172.17.0.4
+	\end{lstlisting}
+	
+	Ya tenemos las direcciones IP privadas que genera \emph{docker0} para los dos contenedores. Ahora probamos a hacer un ping desde un contenedor a otro. Desde el contenedor \textit{grave\_mahavira} con IP 172.17.0.4 al contenedor \textit{compassionate\_mccarthy} con IP 172.17.0.5 se haría así.
+	
+	\begin{lstlisting}[style=consola,numbers=left]
+root@2f3c19da0cb8:/# ping 172.17.0.5
+PING 172.17.0.5 (172.17.0.5) 56(84) bytes of data.
+64 bytes from 172.17.0.5: icmp_seq=1 ttl=64 time=0.085 ms
+64 bytes from 172.17.0.5: icmp_seq=2 ttl=64 time=0.058 ms
+64 bytes from 172.17.0.5: icmp_seq=3 ttl=64 time=0.061 ms
+64 bytes from 172.17.0.5: icmp_seq=4 ttl=64 time=0.060 ms
+64 bytes from 172.17.0.5: icmp_seq=5 ttl=64 time=0.106 ms
+64 bytes from 172.17.0.5: icmp_seq=6 ttl=64 time=0.135 ms
+^C
+--- 172.17.0.5 ping statistics ---
+6 packets transmitted, 6 received, 0% packet loss, time 4997ms
+rtt min/avg/max/mdev = 0.058/0.084/0.135/0.028 ms
+	\end{lstlisting}
+	
+	Se puede hacer exactamente lo mismo con los nombres de los contenedore docker ya que esto son los nombres que se le dan en la red \emph{docker0} a la que están conectados. En este caso haremos un ping desde \textit{compassionate\_mccarthy} a \textit{grave\_mahavira} usando para ello el nombre del contenedor.
+	
+	\begin{lstlisting}[style=consola,numbers=left]
+root@829a49bb2cfa:/# ping grave_mahavira
+PING grave_mahavira (172.17.0.4) 56(84) bytes of data.
+64 bytes from grave_mahavira.bridge (172.17.0.4): icmp_seq=1 ttl=64 time=0.087 ms
+64 bytes from grave_mahavira.bridge (172.17.0.4): icmp_seq=2 ttl=64 time=0.066 ms
+64 bytes from grave_mahavira.bridge (172.17.0.4): icmp_seq=3 ttl=64 time=0.066 ms
+64 bytes from grave_mahavira.bridge (172.17.0.4): icmp_seq=4 ttl=64 time=0.067 ms
+64 bytes from grave_mahavira.bridge (172.17.0.4): icmp_seq=5 ttl=64 time=0.066 ms
+64 bytes from grave_mahavira.bridge (172.17.0.4): icmp_seq=6 ttl=64 time=0.064 ms
+^C
+--- grave_mahavira ping statistics ---
+6 packets transmitted, 6 received, 0% packet loss, time 5001ms
+rtt min/avg/max/mdev = 0.064/0.069/0.087/0.010 ms
+	\end{lstlisting}
+	
+	Debido a esto, los nombres que se usan en los contendores deben ser \textbf{únicos}. Debemos tenerlo en cuanta a la hora de renombrar los contenedores. Tampoco podemos cambiar el nombre de un  contenedor durante su ejecucíon, solo podremos nombrarlo al lanzarlo.
+	
+	\section{Links entre contenedores}
+	Como hemos visto, a causa de tener los contenedores dentro de una red privada, comunicarlos entre ellos es algo trivial. El problema de transmitir información de esta manera es que el interfaz \emph{docker0} se usa para \textbf{todos} los contenedores que estén en ejecución en ese host. Si queremos realizar una comunicación privada entre dos contenedores, que sea invisible para el resto de contenedores, debemos usar el mecanismo que provee Docker, el linkado de contenedores \cite{docker-network-linking}.
+	
+	Docker provee también un sistema para mapear puertos entre dos contenedores, aunque el mejor sistema que podemos usar para conectar contendores el el linkado, ya que abstrae todo el sistema de puertos, y crea un puente virtual que permite una comunicación segura entre los contenedores.
+	
+	Para usar el sistema de links de Docker, debemos usar el flag \textbf{--link} a la hora de lanzar el contenedor. Primero vamos a crear un contenedor al que llamaremos ros1.
+	
+	\begin{lstlisting}[style=consola]
+$ docker run -it --name ros1 osrf/ros:indigo-desktop /bin/bash
+	\end{lstlisting}
+	
+	A continuación vamos a crear otro contenedor, al que llamaremos \emph{ros2}, que este linkado a \emph{ros1}.
+	
+	\begin{lstlisting}[style=consola]
+$ docker run -it --name ros2 --link ros1 osrf/ros:indigo-desktop /bin/bash
+	\end{lstlisting}
+	
+	Ahora desde fuera de los contenedores, miramos los links que tiene \emph{ros2} mediante \emph{inspect}.
+	
+	\begin{lstlisting}[style=consola,numbers=left]
+$ docker inspect -f "{{ .HostConfig.Links }}" ros2
+[/ros1:/ros2/ros1]
+	\end{lstlisting}
+	
+	Ahora desde \emph{ros2} podemos acceder a la información de \emph{ros1}.
+	
+	Para lograr este enlace Docker usa dos sistemas diferentes:
+	
+	\begin{itemize}
+		\item Variables de entorno
+		\item Actualizar el fichero \emph{/etc/hosts}
+	\end{itemize}
+	
+	Todo esto lo realiza de manera automática a la hora de enlazar dos contenedores.
+	
+	\section{\textit{network} de Docker}
+	
+	\textit{\footnotesize \textbf{NOTA:} el contenido de toda esta sección se basa en la versión de la rama experimental de Docker. A día de hoy (27 de octubre de 2015) esta funcionalidad no se encuentra en la versión estable de Docker, que es la 1.8.3. La versión utilizada para la explicación es la versión 1.9.0-dev (build b92df9f), de la rama de desarrollo.}
+
+	En la rama experimental de Docker, se encuentra una funcionalidad que lleva gestándose desde que salió la versión 1.7 de Docker. Esta nueva funcionalidad permite crear redes con diferentes topologías de una manera sencilla, abstrayendo de configuraciones, al igual que los links de Docker. A diferencia de los links de Docker, que está más orientados a conectar directamente contenedores, esta nueva función permite crear redes virtuales enteras.
+	
+	La forma de trabajar con esta funcionalidad es mediante el uso del comando \textit{\emph{network}}.
+	
+	\begin{lstlisting}[style=consola]
+$ docker network --help
+
+Usage:	docker network [OPTIONS] COMMAND [OPTIONS]
+
+Commands:
+disconnect               Disconnect container from a network
+inspect                  Display detailed network information
+ls                       List all networks
+rm                       Remove a network
+create                   Create a network
+connect                  Connect container to a network
+
+Run 'docker network COMMAND --help' for more information on a command.
+
+--help=false       Print usage
+	\end{lstlisting}
+	
+	\subsection{Prueba de \textit{network} con nodos ROS}
+
+% WORKING ON PROGRESS --------------------------------------------------------------------
+
+	Para probar el funcionamiento del comando \emph{network}, vamos a hacer algo diferente. vamos a hacer uso de máquinas ROS pero con una serie de tutoriales instalados que no spermitirán probar el funcionamiento del comando. Para generar la imagen partiremos del siguiente Dockerfile.
+
+	\lstinputlisting[style=consola,numbers=left]{../Dockerfiles/ros-tutorials/Dockerfile.}
+	
+	A partir del Dockerfile generamos la imagen de la siguiente manera.
+
+	\begin{lstlisting}[style=consola]
+$ docker build --tag ros:ros-tutorials .
+	\end{lstlisting}
+
+	A continuación vamos a crear la red. Para ello tenemos que usar el subcomando \emph{create} de \emph{network}. Lo haremos de la siguiente manera.
+
+	\begin{lstlisting}[style=consola]
+docker network create red_ros
+dd9a08f95ed51940155daf4b9c2048bae3de5fbcc48a439fa88edefd775dcc52
+	\end{lstlisting}
+	
+	Tras haber creado la red, procedemos a crear los nodos que conformarán la misma. Estos nodos serán contenedores ROS instanciados a partir de la imagen generada anteriormente.
+	
+{\color{red}
+%Now that we have a network, we can create services. Services advertise there location on the network, making it easy to resolve the location/address of the service specific container. We'll use this make sure our ROS nodes can find and connect to our ROS master.
+
+%Run services
+%To create a container for the ROS master and advertise it's service:
+
+	El primer nodo que crearemos será el nodo maestro (\emph{master}). Este será el que ejecute \emph{roscore}, que se necesario para que ROS funcione.
+
+	\begin{lstlisting}[style=consola,numbers=left]
+$ docker run -it --rm \
+             --publish-service=master.red_ros \
+             --name master \
+             ros:ros-tutorials \
+             roscore
+	\end{lstlisting}
+	
+%Now you can see that master is running and is ready manage our other ROS nodes. To add our talker node, we'll need to point the relevant environment variable to the master service:
+
+	El segundo nodo que crearemos sera uno que haga la función de generar los mensajes, conocido como \emph{talker}. Lo crearemos de la siguiente manera.
+		
+	\begin{lstlisting}[style=consola,numbers=left]
+$ docker run -it --rm\
+             --publish-service=talker.red_ros \
+             --env ROS_HOSTNAME=talker \
+             --env ROS_MASTER_URI=http://master:11311 \
+             --name talker \
+             ros:ros-tutorials \
+             rosrun roscpp_tutorials talker
+	\end{lstlisting}
+	
+%Then in another terminal, run the listener node similarly:
+
+	Si acabamos de crear un nodo que habla, lo lógico sería crear un nodo que escuche. Este tipo de nodo será el \emph{listener}, y lo crearemos de la siguiente manera.
+
+	\begin{lstlisting}[style=consola,numbers=left]
+$ docker run -it --rm\
+             --publish-service=listener.red_ros \
+             --env ROS_HOSTNAME=listener \
+             --env ROS_MASTER_URI=http://master:11311 \
+             --name listener \
+             ros:ros-tutorials \
+             rosrun roscpp_tutorials listener
+	\end{lstlisting}
+	
+	En desarrollo...
+}
+
+%-----------------------------------------------------------------------------------------
+	
+	\section{Configuración manual de redes}
+	Aunque en este capítulo se han enseñado varios mecanismos que provee Docker para administrar redes de contenedores, también podemos configurar toda nuestra red de una manera más tradicional, mediante la modificación de archivos como \emph{/etc/hosts} o \emph{/etc/interfaces} en nuestros contenedores, el uso de \emph{Iptables}, configuración de DNS,... 
+	
+	Docker mediante estos mecanismos busca abstraer parte de la configuración para hacerla mas sencilla de cara al desarrollador o al administrador.
+	
+	Prácticamente cualquier aspecto relacionado con las redes se puede configurar en Docker mediante una serie de flags especiales a la hora de lanzar el servicio de Docker, por lo que no se pueden modificar mientras Docker esté en ejecución (no confundir con que un contenedor esté en ejecución). Algunos de esos comandos con flags especiales solo se pueden ejecutar con el servicio de Docker parado. Varios de los mas importantes son.
+	
+	\begin{lstlisting}[style=consola,numbers=left]
+--default-gateway=IP_ADDRESS # Define la IP a la que se conectaran los contenedores de Docker al crearse, por defecto se usa la de docker0
+--icc=true|false # Indica si se permite la comunicacion entre contenedores, por defecto true
+--ipv6=true|false # Define si se usa IPv6, por defecto false
+--ip-forward=true|false # Indica si esta activada la comunicacion entre los contenedores y el exterior, por defecto true
+--iptables=true|false # Define si se perminte el uso de iptables (filtra direcciones y puertos, se usa como firewall en sistemas tipo UNIX)
+	\end{lstlisting}
+	
+	En la documentación de Networking avanzado de Docker \cite{docker-network-advanced} se puede encontrar mucha más información de como hacer esto.
+	

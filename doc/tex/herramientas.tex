@@ -1,0 +1,87 @@
+\chapter{Herramientas utilizadas}
+
+\section{Hardware}
+Aunque el vehículo dispone de numeroso hardware, en esta sección solo hablaremos sobre el hardware para el cual nosotros vamos a programar. En este caso todo nuestro sistema se montará en una Raspberry pi, aunque el desarrollo del sistema lo haremos en los PCs con arquitectura x86.
+
+	\subsection{Raspberry Pi}
+	Raspberry Pi es un ordenador de placa reducida que debido a us bajo coste (35 \$) y su pequeño tamaño, es ampliamente usado en sistemas de bajo coste, sistemas embebidos o en entornos educativos. Existen dos principales modelos, la Raspberry Pi y la Raspberry Pi 2. La Raspberry Pi a su vez cuenta con 4 diferentes submodelos, el A, el A+, el B y el B+.
+	
+	Aunque cuenta con diferentes submodelos con diferentes especificaciones, las características generales de la Raspberry Pi son \cite{rpi-wikipedia}:
+	
+	\begin{itemize}
+		\item SoC (System on Chip) Broadcom BCM2835:
+			\begin{itemize}
+				\item CPU ARM 1176JZF-S a 700 MHz single-core (familia ARM11)
+				\item GPU Broadcom VideoCore IV (OpenGL ES 2.0, MPEG-2 y VC-1, 1080p30 H.264/MPEG-4 AVC3)
+			\end{itemize}
+		\item Memoria SDRAM: 256 MB (en el modelo A) o 512 MB (en el modelo B), compartidos con la GPU
+		\item Puertos USB 2.0: 1 (en el modelo A), 2 (en el modelo B) o 4 (en el modelo B+)
+		\item 10/100 Ethernet RJ-45 (en el Modelo B)
+		\item Salidas de video:
+			\begin{itemize}
+				\item Conector RCA (PAL y NTSC)
+				\item HDMI (rev1.3 y 1.4)
+				\item Interfaz DSI para panel LCD
+			\end{itemize}
+		\item Salidas de audio:
+			\begin{itemize}
+				\item Conector de 3.5 mm
+				\item HDMI
+			\end{itemize}
+		\item Puertos GPIO: 8 o 17 (en el caso de las versiones +)
+	\end{itemize}
+	
+	El segundo modelo de Raspberry Pi, conocido como Paspberry Pi 2, añade mejoras notables con respecto a la anterior generación. Sus características básicas son:
+	
+	\begin{itemize}
+		\item SoC Broadcom BCM2836:
+			\begin{itemize}
+				\item 900 MHz quad-core ARM Cortex A7
+				\item GPU Broadcom VideoCore IV (OpenGL ES 2.0, MPEG-2 y VC-1, 1080p30 H.264/MPEG-4 AVC3)
+			\end{itemize}
+		\item 1GB memoria SDRAM, compartida con la GPU
+		\item 4 puertos USB 2.0
+		\item 10/100 Ethernet RJ-45
+		\item Salidas de video:
+		\begin{itemize}
+			\item Conector RCA (PAL y NTSC)
+			\item HDMI (rev1.3 y 1.4)
+			\item Interfaz DSI para panel LCD
+		\end{itemize}
+		\item Salidas de audio:
+		\begin{itemize}
+			\item Conector de 3.5 mm
+			\item HDMI
+		\end{itemize}
+		\item 17 puertos GPIO
+	\end{itemize}
+	
+
+\section{Software}
+Para lograr dicho objetivo anteriormente descrito, se hace uso de una serie de herramientas, entre las cuales se incluye Docker y ROS.
+
+	\subsection{Docker}
+	Docker es una plataforma abierta para aplicaciones distribuidas para desarrolladores y administradores de sistemas\cite{docker-web}. Docker automatiza el despliegue de contenidos de software proporcionando una capa adicional de abstracción y automatización de virtualización a nivel de sistema operativo en Linux \cite{docker-wikipedia}. Docker utiliza características de aislamiento de recursos del kernel de Linux, 
+	
+		\subsubsection{Funcionamiento de Docker}
+		Docker se basa en el el principio de los contenedores. Cada contenedor consta de una serie de aplicaciones y/o librerías que se ejecutan de manera independiente del OS (Sistema Operativo) principal, pero que usan el kernel Linux del sistema operativo anfitrión. Para hacer esto se hacen uso de diferentes técnicas tales como cgroups y espacios de nombres (namespaces) para permitir que estos contenedores independientes se ejecuten dentro de una sola instancia de Linux. De esta manera se logra reducir drásticamente el consumo de recursos de hardware, a cambio de que las librerías, aplicaciones o sistemas operativos deban ser compatibles con linux y ser compatibles con la arquitectura del hardware en la que se están ejecutando (x86, ARM, SPARC,...).
+		
+		Mediante el uso de contenedores, los recursos pueden ser aislados, los servicios restringidos, y se otorga a los procesos la capacidad de tener una visión casi completamente privada del sistema operativo con su propio identificador de espacio de proceso, la estructura del sistema de archivos, y las interfaces de red. Los contenedores comparten el mismo kernel, pero cada contenedor puede ser restringido a utilizar sólo una cantidad definida de recursos como CPU, memoria y E/S. \cite{docker-wikipedia}.
+
+	\subsection{ROS}
+	ROS (Robot Operating System) es un framework flexible para desarrollar software para robots. Es una colección de herramientas, librerías que tratan de simplificar la creación de aplicaciones complejas y robustas para todo tipo de sistemas robóticos \cite{ros-web}.
+	
+	ROS provee los servicios estándar de un sistema operativo tales como abstracción del hardware, control de dispositivos de bajo nivel, implementación de funcionalidad de uso común, paso de mensajes entre procesos y mantenimiento de paquetes. Está basado en una arquitectura de grafos donde el procesamiento toma lugar en los nodos que pueden recibir, mandar y multiplexar mensajes de sensores, control, estados, planificaciones y actuadores, entre otros \cite{ros-wikipedia}.
+
+
+	Las áreas que incluye ROS son:
+	\begin{itemize}
+		\item Un nodo principal de coordinación.
+		\item Publicación o subscripción de flujos de datos: imágenes, estéreo, láser, control, actuador, contacto, etc.
+		\item Multiplexación de la información.
+		\item Creación y destrucción de nodos.
+		\item Los nodos están perfectamente distribuidos, permitiendo procesamiento distribuido en múltiples núcleos, multiprocesamiento, GPUs y clústeres.
+		Login.
+		\item Parámetros de servidor.
+		\item Testeo de sistemas.
+	\end{itemize}

@@ -11,36 +11,39 @@ Con Docker podemos crear una gran cantidad de contenedores diferentes que se eje
 	Sin embargo, \textbf{no} podemos acceder a los contenedores desde fuera, desde internet. Por defecto está 
 	establecido así, principalmente por temas de seguridad, aunque obviamente se puede cambiar.
 	
-	\section{Ping entre contenedores}
-	Si todos los contenedores que creamos se encuentran en una misma subred, podemos comunicarnos entre ellos simplemente con sus direcciones IP privadas o sus nombres de red. La forma más sencilla para probar la comunicación entre dos sistemas es el uso de la herramienta ping de linux.
+	\section{Prueba de conexión entre contenedores}
+	Si todos los contenedores que creamos se encuentran en una misma subred, podemos comunicarnos entre ellos simplemente con sus direcciones IP privadas o sus nombres de red. Vamos a hacer varias pruebas para comprobar que los contenedores se comunican bien entre ellos.
 	
-	Vamos a lanzar por una parte dos contenedores Docker en dos terminales separadas. Para esta prueba usaremos la misma imagen que vamos a usar para crear nuestro sistema, que es la imagen \emph{osrf/ros:indigo-desktop}, a la que previamente hemos hecho un \emph{pull} para tenerla generada, ya que ocupa alrededor de 1,6 GB. Creamos los contenedores de la siguiente manera.
-	
-	\begin{lstlisting}[style=consola]
+		\subsection{\textit{ping}}
+		La forma más sencilla para probar la comunicación entre dos sistemas es el uso de la herramienta \emph{ping} de linux.
+		
+		Vamos a lanzar por una parte dos contenedores Docker en dos terminales separadas. Para esta prueba usaremos la misma imagen que vamos a usar para crear nuestro sistema, que es la imagen \emph{osrf/ros:indigo-desktop}, a la que previamente hemos hecho un \emph{pull} para tenerla generada, ya que ocupa alrededor de 1,6 GB. Creamos los contenedores de la siguiente manera.
+		
+		\begin{lstlisting}[style=consola]
 $ docker run -it osrf/ros:indigo-desktop /bin/bash
-	\end{lstlisting}
-	
-	Desde fuera comprobamos que tenemos los contenedores en ejecución.
-	
-	\begin{lstlisting}[style=consola,numbers=left]
+		\end{lstlisting}
+		
+		Desde fuera comprobamos que tenemos los contenedores en ejecución.
+		
+		\begin{lstlisting}[style=consola,numbers=left]
 $ docker ps
 CONTAINER ID        IMAGE                     COMMAND                  CREATED             STATUS              PORTS               NAMES
 829a49bb2cfa        osrf/ros:indigo-desktop   "/ros_entrypoint.sh /"   6 seconds ago       Up 6 seconds                            compassionate_mccarthy
 2f3c19da0cb8        osrf/ros:indigo-desktop   "/ros_entrypoint.sh /"   16 seconds ago      Up 16 seconds                           grave_mahavira
-	\end{lstlisting}
-	
-	Podemos obtener la dirección IP de un contenedor tanto desde fuera como desde dentro de Docker. En este caso lo haremos desde fuera mediante el \emph{inspect} de Docker.
-	
-	\begin{lstlisting}[style=consola,numbers=left]
+		\end{lstlisting}
+		
+		Podemos obtener la dirección IP de un contenedor tanto desde fuera como desde dentro de Docker. En este caso lo haremos desde fuera mediante el \emph{inspect} de Docker.
+		
+		\begin{lstlisting}[style=consola,numbers=left]
 $ docker inspect --format='{{.NetworkSettings.IPAddress}}' compassionate_mccarthy
 172.17.0.5
 $ docker inspect --format='{{.NetworkSettings.IPAddress}}' grave_mahavira
 172.17.0.4
-	\end{lstlisting}
-	
-	Ya tenemos las direcciones IP privadas que genera \emph{docker0} para los dos contenedores. Ahora probamos a hacer un ping desde un contenedor a otro. Desde el contenedor \textit{grave\_mahavira} con IP 172.17.0.4 al contenedor \textit{compassionate\_mccarthy} con IP 172.17.0.5 se haría así.
-	
-	\begin{lstlisting}[style=consola,numbers=left]
+		\end{lstlisting}
+		
+		Ya tenemos las direcciones IP privadas que genera \emph{docker0} para los dos contenedores. Ahora probamos a hacer un ping desde un contenedor a otro. Desde el contenedor \textit{grave\_mahavira} con IP 172.17.0.4 al contenedor \textit{compassionate\_mccarthy} con IP 172.17.0.5 se haría así.
+		
+		\begin{lstlisting}[style=consola,numbers=left]
 root@2f3c19da0cb8:/# ping 172.17.0.5
 PING 172.17.0.5 (172.17.0.5) 56(84) bytes of data.
 64 bytes from 172.17.0.5: icmp_seq=1 ttl=64 time=0.085 ms
@@ -53,11 +56,11 @@ PING 172.17.0.5 (172.17.0.5) 56(84) bytes of data.
 --- 172.17.0.5 ping statistics ---
 6 packets transmitted, 6 received, 0% packet loss, time 4997ms
 rtt min/avg/max/mdev = 0.058/0.084/0.135/0.028 ms
-	\end{lstlisting}
-	
-	Se puede hacer exactamente lo mismo con los nombres de los contenedore docker ya que esto son los nombres que se le dan en la red \emph{docker0} a la que están conectados. En este caso haremos un ping desde \textit{compassionate\_mccarthy} a \textit{grave\_mahavira} usando para ello el nombre del contenedor.
-	
-	\begin{lstlisting}[style=consola,numbers=left]
+		\end{lstlisting}
+		
+		Se puede hacer exactamente lo mismo con los nombres de los contenedores docker ya que esto son los nombres que se le dan en la red \emph{docker0} a la que están conectados. En este caso haremos un ping desde \textit{compassionate\_mccarthy} a \textit{grave\_mahavira} usando para ello el nombre del contenedor.
+		
+		\begin{lstlisting}[style=consola,numbers=left]
 root@829a49bb2cfa:/# ping grave_mahavira
 PING grave_mahavira (172.17.0.4) 56(84) bytes of data.
 64 bytes from grave_mahavira.bridge (172.17.0.4): icmp_seq=1 ttl=64 time=0.087 ms
@@ -70,9 +73,52 @@ PING grave_mahavira (172.17.0.4) 56(84) bytes of data.
 --- grave_mahavira ping statistics ---
 6 packets transmitted, 6 received, 0% packet loss, time 5001ms
 rtt min/avg/max/mdev = 0.064/0.069/0.087/0.010 ms
-	\end{lstlisting}
-	
-	Debido a esto, los nombres que se usan en los contendores deben ser \textbf{únicos}. Debemos tenerlo en cuanta a la hora de renombrar los contenedores. Tampoco podemos cambiar el nombre de un  contenedor durante su ejecucíon, solo podremos nombrarlo al lanzarlo.
+		\end{lstlisting}
+		
+		Debido a esto, los nombres que se usan en los contendores deben ser \textbf{únicos}. Debemos tenerlo en cuanta a la hora de renombrar los contenedores. Tampoco podemos cambiar el nombre de un  contenedor durante su ejecucíon, solo podremos nombrarlo al lanzarlo.
+		
+		\subsection{\textit{netcat}}
+		Otra forma de probar conexiones algo más versátil es el uso de \emph{netcat}. Netcat permite probar conexiones con cualquier tipo de puerto. Para probar que podemos usar cualquier puerto de los que no están predefinidos, vamos a usar la herramienta usando un puerto cualquiera de los que tenemos disponibles. En este caso lo haremos usando el puerto 1234. Para probarlo haremos lo siguiente.
+		
+		\begin{enumerate}
+			\item Ejecutaremos en uno de los contenedores (da igual cual, la comunicación que se establecerá será bidireccional) netcat en modo escucha. En este caso lo haremos en \textit{grave\_mahavira}.
+				\begin{lstlisting}[style=consola]
+root@2f3c19da0cb8:/# netcat -l 1234
+
+				\end{lstlisting}
+			\item Desde el otro contenedor (\textit{compassionate\_mccarthy}) nos intentaremos conectar al primero.
+				\begin{lstlisting}[style=consola]
+root@829a49bb2cfa:/# netcat grave_mahavira 1234
+
+				\end{lstlisting}			
+			\item Si todo ha salido bien, podremos escribir desde cualquiera de los dos terminales y aparecerá lo introducido en el otro.
+			\begin{enumerate}
+				\item Escribimos en \textit{grave\_mahavira}.
+				\begin{lstlisting}[style=consola]
+root@2f3c19da0cb8:/# netcat -l 1234
+Hola!
+
+				\end{lstlisting}
+				\begin{lstlisting}[style=consola]
+root@829a49bb2cfa:/# netcat grave_mahavira 1234
+Hola!
+
+				\end{lstlisting}	
+				\item Y ahora en \textit{compassionate\_mccarthy}
+				\begin{lstlisting}[style=consola]
+root@2f3c19da0cb8:/# netcat -l 1234
+Hola!
+Hola de nuevo!				
+				
+				\end{lstlisting}
+				\begin{lstlisting}[style=consola]
+root@829a49bb2cfa:/# netcat grave_mahavira 1234
+Hola!
+Hola de nuevo!
+
+				\end{lstlisting}
+			\end{enumerate}
+		\end{enumerate}
 	
 	\section{Links entre contenedores}
 	Como hemos visto, a causa de tener los contenedores dentro de una red privada, comunicarlos entre ellos es algo trivial. El problema de transmitir información de esta manera es que el interfaz \emph{docker0} se usa para \textbf{todos} los contenedores que estén en ejecución en ese host. Si queremos realizar una comunicación privada entre dos contenedores, que sea invisible para el resto de contenedores, debemos usar el mecanismo que provee Docker, el linkado de contenedores \cite{docker-network-linking}.

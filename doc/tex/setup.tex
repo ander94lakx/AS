@@ -86,6 +86,9 @@
 \definecolor{gray85}{gray}{.80}
 \definecolor{gray45}{gray}{.45}
 \definecolor{myturquoise}{RGB}{0, 128, 128}
+\definecolor{mypink}{RGB}{177,48,112}
+\definecolor{myblue}{RGB}{56,133,231}
+
 
 \lstset{ 
 	frame=Ltb,
@@ -123,5 +126,25 @@
 	basicstyle=\footnotesize\bf\ttfamily,
 	backgroundcolor=\color{gray85},
 	rulesepcolor=\color{myturquoise},
+	numbers=none,
+}
+
+% Estilo de codigo para C++
+\lstdefinestyle{cpp}{
+	language=C++,
+	breaklines=true,
+	basicstyle=\footnotesize\ttfamily,
+	backgroundcolor=\color{gray95},
+	rulesepcolor=\color{myblue},
+	numbers=none,
+}
+
+% Estilo de codigo para C++
+\lstdefinestyle{makefile}{
+	language=make,
+	breaklines=true,
+	basicstyle=\footnotesize\ttfamily,
+	backgroundcolor=\color{gray95},
+	rulesepcolor=\color{mypink},
 	numbers=none,
 }

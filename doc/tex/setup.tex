@@ -20,6 +20,7 @@
 \usepackage[Bjornstrup]{fncychap} % Para poner los títulos de los capítulos más bonitos
 \usepackage{fancyhdr} % Para configurar las cabeceras y los piés de página
 \usepackage{titling} % Para usar la información del documento en otras partes de él
+\usepackage{caption}
 
 %========================================================================================
 % ESTILO
@@ -30,6 +31,14 @@
 %----------------------------------------------------------------------------------------
 
 \graphicspath{{./figuras/}}
+
+%----------------------------------------------------------------------------------------
+% ARREGLO PARA EL INDICE DE FIGURAS
+%----------------------------------------------------------------------------------------
+
+\makeatletter
+\renewcommand*\l@figure{\@dottedtocline{1}{1em}{3.2em}}
+\makeatother
 
 %----------------------------------------------------------------------------------------
 % TIPOGRAFIA

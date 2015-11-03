@@ -1,17 +1,149 @@
 \chapter{Prueba con nodos ROS}
 Asumiendo que ya tenemos creadas varios nodos de ROS conectados entre si, a los cuales denominaremos como \textbf{ros1}, \textbf{ros2} y \textbf{ros3}, vamos a crear un pequeño ejemplo de este tipo para comprender mejor su funcionamiento. En el ejemplo, El publisher publicará una serie de datos, que será recibidos por el subscriber una vez se haya suscrito al topic en el que se estén publicando. Para hacerlo lo más simple posible, los datos que se pasarán serán una serie de números enteros.
 
+Nos basaremos en uno de los ejemplos de los que disponemos en la Wiki de ROS \cite{ros-tutorials}, al que haremos unos pequeños cambios para adaptarlo.
+
 	\section{Código de la prueba}
+	El código se divide en dos ficheros .cpp en los que tendremos por una parte el publisher y en la otra el subscriber.	Tendremos un tercer ahrivo más, que será el archivo CMakeLists.txt que nos servirá a la hora de construir el paquete.
 	
-	\subsection{Publisher}
-	\lstinputlisting[style=cpp,numbers=left]{../code/pub-sub-example/talker.cpp}
-	
-	\subsection{Subscriber}
-	\lstinputlisting[style=cpp,numbers=left]{../code/pub-sub-example/listener.cpp}
-	
-	\subsection{CMakeLists}
-	\lstinputlisting[style=makefile,numbers=left]{../code/pub-sub-example/CMakeLists.txt}
+		\subsection{Publisher}
+		\lstinputlisting[style=cpp,numbers=left]{../code/pub-sub-example/talker.cpp}
+		
+		\subsection{Subscriber}
+		\lstinputlisting[style=cpp,numbers=left]{../code/pub-sub-example/listener.cpp}
+		
+		\subsection{CMakeLists}
+		\lstinputlisting[style=makefile,numbers=left]{../code/pub-sub-example/CMakeLists.txt}
 	
 	\section{Construir el paquete}
+	Una vez programado el sistema, pasamos a compilarlo y construirlo. Basándonos en lo que se comentó en el capítulo anterior, lo haremos de la siguiente manera.
 	
-	\section{Ejecución de la aplicación}
+	\begin{lstlisting}[style=consola,numbers=left]
+~$ mkdir -p ~/catkin_ws/src
+~$ cd ~/catkin_ws/src
+~/catkin_ws/src$ catkin_init_workspace
+Creating symlink "/home/ander/catkin_ws/src/CMakeLists.txt" pointing to "/opt/ros/indigo/share/catkin/cmake/toplevel.cmake"
+~/catkin_ws/src$ cd ..
+~/catkin_ws$ source devel/setup.bash
+bash: devel/setup.bash: No existe el archivo o el directorio
+~/catkin_ws$ cd src/
+~/catkin_ws/src$ catkin_create_pkg pruebaROS std_msgs rospy roscpp
+WARNING: Package name "pruebaROS" does not follow the naming conventions. It should start with a lower case letter and only contain lower case letters, digits and underscores.
+Created file pruebaROS/package.xml
+Created file pruebaROS/CMakeLists.txt
+Created folder pruebaROS/include/pruebaROS
+Created folder pruebaROS/src
+Successfully created files in /home/ander/catkin_ws/src/pruebaROS. Please adjust the values in package.xml.
+~/catkin_ws/src$ ls
+CMakeLists.txt  pruebaROS
+~/catkin_ws/src$ cd ..
+~/catkin_ws$ catkin_make
+Base path: /home/ander/catkin_ws
+Source space: /home/ander/catkin_ws/src
+Build space: /home/ander/catkin_ws/build
+Devel space: /home/ander/catkin_ws/devel
+Install space: /home/ander/catkin_ws/install
+WARNING: Package name "pruebaROS" does not follow the naming conventions. It should start with a lower case letter and only contain lower case letters, digits and underscores.
+####
+#### Running command: "cmake /home/ander/catkin_ws/src -DCATKIN_DEVEL_PREFIX=/home/ander/catkin_ws/devel -DCMAKE_INSTALL_PREFIX=/home/ander/catkin_ws/install -G Unix Makefiles" in "/home/ander/catkin_ws/build"
+####
+-- The C compiler identification is GNU 4.8.4
+-- The CXX compiler identification is GNU 4.8.4
+-- Check for working C compiler: /usr/bin/cc
+-- Check for working C compiler: /usr/bin/cc -- works
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++
+-- Check for working CXX compiler: /usr/bin/c++ -- works
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Using CATKIN_DEVEL_PREFIX: /home/ander/catkin_ws/devel
+-- Using CMAKE_PREFIX_PATH: /opt/ros/indigo
+-- This workspace overlays: /opt/ros/indigo
+-- Found PythonInterp: /usr/bin/python (found version "2.7.6")
+-- Using PYTHON_EXECUTABLE: /usr/bin/python
+-- Using Debian Python package layout
+-- Using empy: /usr/bin/empy
+-- Using CATKIN_ENABLE_TESTING: ON
+-- Call enable_testing()
+-- Using CATKIN_TEST_RESULTS_DIR: /home/ander/catkin_ws/build/test_results
+-- Looking for include file pthread.h
+-- Looking for include file pthread.h - found
+-- Looking for pthread_create
+-- Looking for pthread_create - not found
+-- Looking for pthread_create in pthreads
+-- Looking for pthread_create in pthreads - not found
+-- Looking for pthread_create in pthread
+-- Looking for pthread_create in pthread - found
+-- Found Threads: TRUE  
+-- Found gtest sources under '/usr/src/gtest': gtests will be built
+-- Using Python nosetests: /usr/bin/nosetests-2.7
+-- catkin 0.6.14
+-- BUILD_SHARED_LIBS is on
+WARNING: Package name "pruebaROS" does not follow the naming conventions. It should start with a lower case letter and only contain lower case letters, digits and underscores.
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-- ~~  traversing 1 packages in topological order:
+-- ~~  - pruebaROS
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-- +++ processing catkin package: 'pruebaROS'
+-- ==> add_subdirectory(pruebaROS)
+WARNING: Package name "pruebaROS" does not follow the naming conventions. It should start with a lower case letter and only contain lower case letters, digits and underscores.
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/ander/catkin_ws/build
+####
+#### Running command: "make -j1 -l1" in "/home/ander/catkin_ws/build"
+####
+~/catkin_ws$ ls
+build  devel  src
+~/catkin_ws$ cd src
+~/catkin_ws/src$ ls
+CMakeLists.txt  pruebaROS
+~/catkin_ws/src$ cd pruebaROS/
+~/catkin_ws/src/pruebaROS$ ls
+CMakeLists.txt  include  package.xml  src
+~/catkin_ws/src/pruebaROS$ cd src
+~/catkin_ws/src/pruebaROS/src$ ls
+~/catkin_ws/src/pruebaROS/src$ touch talker.cpp
+~/catkin_ws/src/pruebaROS/src$ touch listener.cpp
+~/catkin_ws/src/pruebaROS/src$ ls
+listener.cpp  talker.cpp
+
+	\end{lstlisting}
+
+	Ahora ya tenemos todos los archivos creados, debemos llenarlos con el contenido que hemos mostrado antes. En este caso uso \textit{nano} para editar los archivos, pero se puede hacer con \textit{vi} o cualquier otro editor.
+
+	\begin{lstlisting}[style=consola,numbers=left]
+~/catkin_ws/src/pruebaROS/src$ nano listener.cpp
+~/catkin_ws/src/pruebaROS/src$ nano talker.cpp
+~/catkin_ws/src/pruebaROS/src$ cd ..
+~/catkin_ws/src/pruebaROS$ ls
+CMakeLists.txt  include  package.xml  src
+~/catkin_ws/src/pruebaROS$ echo "" > CMakeLists.txt # Para vaciar el archivo
+~/catkin_ws/src/pruebaROS$ nano CMakeLists.txt
+	\end{lstlisting}
+
+	Una vez llenos podemos proceder a compilarlo.
+	
+	\begin{lstlisting}[style=consola,numbers=left]
+~/catkin_ws/src/pruebaROS$ cd ..
+~/catkin_ws/src$ cd ..
+~/catkin_ws$ ls
+build  devel  src
+~/catkin_ws$ catkin_make
+# Salida del catkin_make AQUI
+	\end{lstlisting}
+	
+	Esto nos generará dos ejecutables, \emph{talker} y \emph{listener}, que por defecto irán al directorio devel/lib/<nombre del paquete> de nuestro workspace.
+	
+	\begin{lstlisting}[style=consola,numbers=left]
+
+	\end{lstlisting}
+	This will create two executables, talker and listener, which by default will go into package directory of your devel space, located by default at ~/catkin_ws/devel/lib/<package name>.
+	
+	\section{Ejecución}
+	Probaremos el sistema para comprobar que funciona correctamente. Para ello haremos lo siguiente.
+	
+	\begin{lstlisting}[style=consola,numbers=left]
+	
+	\end{lstlisting}

@@ -1,12 +1,6 @@
 \chapter{Introducción a ROS}
 Anteriormente se ha explicado qué es ROS y que características tiene. En este capitulo se pasara a profundizar en su funcionamiento, y mostraremos como se pueden programar los sistemas de paso de mensajes que pasaremos a implementar en un sistema de contenedores Docker.
 
-	\section{Entendiendo ROS}
-		
-		\subsection{Nodos de ROS}
-		
-		\subsection{Topics de ROS}
-	
 	\section{Entorno de trabajo}
 	Para poder trabajar con ROS lo primero que debemos tener es un entorno con las herramientas de ROS instaladas. En este caso, como vamos a usar contenedores Docker con todo lo necesario en ellos no necesitaremos instalar ningún tipo de paquete adicional. El Dockerfile que vamos a usar para generar la imagen Ubuntu con ROS ya instalado se encuentra disponible en el Docker Hub y aparece con el nombre \emph{osrf/ros:indigo-desktop}. Esta imagen contiene \cite{ros-installation}:
 	\begin{itemize}
@@ -19,10 +13,37 @@ Anteriormente se ha explicado qué es ROS y que características tiene. En este 
 		\item \emph{\textbf{rqt}}, framework basado en Qt para construir aplicaciones con interfaz gráfica de usuario (GUI) con ROS
 		\item \emph{\textbf{rviz}}, herramienta de visualización 3D para ROS
 		\item Librerías genéricas para sistemas robóticos
-		
 	\end{itemize}
 	
 	De momento no vamos a hacer uso de ninguna herramienta gráfica. Para probar el funcionamiento de ROS antes de programar sobre nuestro sistema, vamos a elaborar una pequeña aplicación distribuida que nos permita enviar unos datos de un nodo a otro.
+	
+	\section{Uso de ROS}
+	Al igual que hacemos con Docker, manejaremos ROS desde la terminal. Existen una serie de comandos que necesitamos conocer para poder empezar a trabajar con él. Los comandos son los siguientes \cite{ros-comandos}:
+	
+	\begin{itemize}
+		\item \emph{\textbf{roscd}}: cambia a un directorio de paquete
+		\item \emph{\textbf{roscore}}: ejecuta todo lo necesario para que dar soporte de ejecución al sistema completo de ROS. Siempre tiene que estar ejecutándose para permitir que se comuniquen los nodos. Permite ejecutarse en un determinado puerto
+		\item \emph{\textbf{rosnode}}: nos proporciona información sobre un nodo. Disponemos de las siguientes opciones:
+		\begin{itemize}
+			\item \textit{rosnode info [nodo]}: muestra información sobre el nodo
+			\item \textit{rosnode kill [nodo]}: mata ese proceso
+			\item \textit{rosnode list}: muestra los nodos ejecutándose
+			\item \textit{rosnode machine [maquina]}: muestra los nodos que se están ejecutando en la máquina
+			\item \textit{rosnode ping [nodo]}: comprueba la conectividad del nodo
+		\end{itemize}
+		\item \emph{\textbf{rosrun} [nombre\_paquete] [nombre\_nodo]}: permite ejecutar cualquier aplicación de un paquete sin necesidad de cambiar a su directorio
+		\item \emph{\textbf{rostopic}}: permite obtener información sobre un topic
+		\begin{itemize}
+			\item \textit{rostopic bw [topic]}: muestra el ancho de banda consumido por un tópico
+			\item \textit{rostopic echo [topic]}: imprime datos del topic por la salida estándar
+			\item \textit{rostopic find}: encuentra un topic
+			\item \textit{rostopic info [topic]}: imprime información de un topic
+			\item \textit{rostopic list}: imprime información sobre los topics activos
+			\item \textit{rostopic pub [topic]}: publica datos a un topic activo
+			\item \textit{rostopic type [topic]}: imprime el tipo de información de un topic
+		\end{itemize}
+		\item \emph{\textbf{roswtf}}: permite comprobar si algo va mal
+	\end{itemize}
 	
 	\section{Gestionar paquetes ROS}
 	Cualquier aplicación que hagamos con ROS será un paquete que podremos instalar. ROS dispone de varias herramientas mediante las cuales crear y compilar esos paquetes. la más famosa de estas herramientas es \emph{\textbf{catkin}}. \emph{catkin} permite crear y compilar paquetes (que se denominan paquetes \emph{catkin}). que contendrán todo el código que desarrollemos. Se basa en el funcionamiento de herramientas como Make o CMake, habituales para compilar aplicaciones en entornos linux.

@@ -45,23 +45,24 @@ A self-sufficient runtime for containers.
 
 Options:
 
---config=~/.docker              Location of client config files
--D, --debug=false               Enable debug mode
--H, --host=[]                   Daemon socket(s) to connect to
--h, --help=false                Print usage
--l, --log-level=info            Set the logging level
---tls=false                     Use TLS; implied by --tlsverify
---tlscacert=~/.docker/ca.pem    Trust certs signed only by this CA
---tlscert=~/.docker/cert.pem    Path to TLS certificate file
---tlskey=~/.docker/key.pem      Path to TLS key file
---tlsverify=false               Use TLS and verify the remote
--v, --version=false             Print version information and quit
+--config=~/.docker                 Location of client config files
+-D, --debug=false                  Enable debug mode
+--disable-legacy-registry=false    Do not contact legacy registries
+-H, --host=[]                      Daemon socket(s) to connect to
+-h, --help=false                   Print usage
+-l, --log-level=info               Set the logging level
+--tls=false                        Use TLS; implied by --tlsverify
+--tlscacert=~/.docker/ca.pem       Trust certs signed only by this CA
+--tlscert=~/.docker/cert.pem       Path to TLS certificate file
+--tlskey=~/.docker/key.pem         Path to TLS key file
+--tlsverify=false                  Use TLS and verify the remote
+-v, --version=false                Print version information and quit
 
 Commands:
 attach    Attach to a running container
 build     Build an image from a Dockerfile
 commit    Create a new image from a container's changes
-cp        Copy files/folders from a container to a HOSTDIR or to STDOUT
+cp        Copy files/folders between a container and the local filesystem
 create    Create a new container
 diff      Inspect changes on a container's filesystem
 events    Get real time events from the server
@@ -77,13 +78,14 @@ load      Load an image from a tar archive or STDIN
 login     Register or log in to a Docker registry
 logout    Log out from a Docker registry
 logs      Fetch the logs of a container
+network   Manage Docker networks
 pause     Pause all processes within a container
 port      List port mappings or a specific mapping for the CONTAINER
 ps        List containers
 pull      Pull an image or a repository from a registry
 push      Push an image or a repository to a registry
 rename    Rename a container
-restart   Restart a running container
+restart   Restart a container
 rm        Remove one or more containers
 rmi       Remove one or more images
 run       Run a command in a new container
@@ -96,12 +98,20 @@ tag       Tag an image into a repository
 top       Display the running processes of a container
 unpause   Unpause all processes within a container
 version   Show the Docker version information
+volume    Manage Docker volumes
 wait      Block until a container stops, then print its exit code
 
 Run 'docker COMMAND --help' for more information on a command.
 	\end{lstlisting}
 	
-	Como se puede observar existen diferentes comandos que nos permitirán configurar Docker, obtener información sobre el y tratar con las imágenes y los contenedores de Docker. A continuación vamos a explicar algunos de ellos para poder empezar a trabajar con Docker. 
+	Como se puede observar existen diferentes comandos que nos permitirán configurar Docker, obtener información sobre él y tratar con las imágenes y los contenedores de Docker. Durante todo este documento trabajaremos con la versión 1.9, liberada el 3 de noviembre de 2015.
+	
+	\begin{lstlisting}[style=consola]
+$ docker --version
+Docker version 1.9.0, build 76d6bc9
+	\end{lstlisting}	
+	
+	A continuación vamos a explicar algunos de ellos para poder empezar a trabajar con Docker. 
 	
 	\subsection{\textit{run}}
 	El comando esencial para empezar a trabajar con Docker es el comando \textbf{\emph{run}}. Para poder lanzar directamente un contenedor de Docker, se usa el comando \textit{run}.

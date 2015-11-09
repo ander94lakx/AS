@@ -155,11 +155,11 @@ $ docker inspect -f "{{ .HostConfig.Links }}" ros2
 	
 	Todo esto lo realiza de manera automática a la hora de enlazar dos contenedores.
 	
-	\section{\textit{network} de Docker}
-	
-	\textit{\footnotesize \textbf{NOTA:} el contenido de toda esta sección se basa en la versión de la rama experimental de Docker. A día de hoy (27 de octubre de 2015) esta funcionalidad no se encuentra en la versión estable de Docker, que es la 1.8.3. La versión utilizada para la explicación es la versión 1.9.0-dev (build b92df9f), de la rama de desarrollo.}
 
-	En la rama experimental de Docker, se encuentra una funcionalidad que lleva gestándose desde que salió la versión 1.7 de Docker. Esta nueva funcionalidad permite crear redes con diferentes topologías de una manera sencilla, abstrayendo de configuraciones, al igual que los links de Docker. A diferencia de los links de Docker, que está más orientados a conectar directamente contenedores, esta nueva función permite crear redes virtuales enteras.
+	
+	\section{\textit{network} de Docker}
+
+	En la verión 1.9 de Docker (la que se usa en este documento) se implementó una nueva funcionalidad que llevaba gestándose desde que salió la versión 1.7. Esta nueva funcionalidad permite crear redes con diferentes topologías de una manera sencilla, abstrayendo de configuraciones, al igual que los links de Docker. A diferencia de los links de Docker, que está más orientados a conectar directamente contenedores, esta nueva funcionalidad permite crear redes virtuales enteras.
 	
 	La forma de trabajar con esta funcionalidad es mediante el uso del comando \textit{\emph{network}}.
 	
@@ -181,6 +181,75 @@ Run 'docker network COMMAND --help' for more information on a command.
 --help=false       Print usage
 	\end{lstlisting}
 	
+	\subsection{Prueba de \textit{network}}
+	Vamos a crear una red a la que posteriormente vamos a unir dos contedores cualquiera (Ubuntu mismo) y haremos pruebas como las anteriores para comprobar que funciona la red que hemos creado.
+	
+	\begin{enumerate}
+		\item Creamos la red.
+		\begin{lstlisting}[style=consola]
+$ docker network create red-prueba
+6a9b1bceb5e8033744d4220da1c2e144aea9543bdea0804af0261d973b7bd57e
+		\end{lstlisting}
+	
+		\item Creamos dos contenedores Docker.
+		\begin{lstlisting}[style=consola]
+$ docker run -it --name ubuntu1 ubuntu /bin/bash
+root@f5225f49f6a9:/# 
+		\end{lstlisting}
+		\begin{lstlisting}[style=consola]
+$ docker run -it --name ubuntu2 ubuntu /bin/bash
+root@969d7f0c6a5b:/# 
+		\end{lstlisting}
+		
+		\item Añadimos desde el host los dos contendores Docker a la red. Esto se puede hacer de dos maneras. Se puede indicar la red a la que conectarse en el momento en el que creamos el contenedor o se puede hacer después mediante el subcomando \emph{connect} que tiene \emph{network}. Lo haremos de la segunda manera ya que nos permite usar contenedores ya creados.
+		\begin{lstlisting}[style=consola]
+$ docker network connect red-prueba ubuntu1
+$ docker network connect red-prueba ubuntu2 
+		\end{lstlisting}
+		
+		\item Probamos la conexión desde los contenedores
+		\begin{enumerate}
+			\item Hacemos \textit{ping} entre los contenedores.
+			\begin{lstlisting}[style=consola]
+root@f5225f49f6a9:/# ping ubuntu2
+PING ubuntu2 (172.19.0.3) 56(84) bytes of data.
+64 bytes from ubuntu2 (172.19.0.3): icmp_seq=1 ttl=64 time=0.144 ms
+64 bytes from ubuntu2 (172.19.0.3): icmp_seq=2 ttl=64 time=0.066 ms
+64 bytes from ubuntu2 (172.19.0.3): icmp_seq=3 ttl=64 time=0.066 ms
+^C
+--- ubuntu2 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 1998ms
+rtt min/avg/max/mdev = 0.066/0.092/0.144/0.036 ms
+			\end{lstlisting}
+			\begin{lstlisting}[style=consola]
+root@969d7f0c6a5b:/# ping ubuntu1
+PING ubuntu1 (172.19.0.2) 56(84) bytes of data.
+64 bytes from ubuntu1 (172.19.0.2): icmp_seq=1 ttl=64 time=0.062 ms
+64 bytes from ubuntu1 (172.19.0.2): icmp_seq=2 ttl=64 time=0.077 ms
+64 bytes from ubuntu1 (172.19.0.2): icmp_seq=3 ttl=64 time=0.060 ms
+64 bytes from ubuntu1 (172.19.0.2): icmp_seq=4 ttl=64 time=0.067 ms
+^C
+--- ubuntu1 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 2999ms
+rtt min/avg/max/mdev = 0.060/0.066/0.077/0.010 ms
+			\end{lstlisting}
+			
+			\item Usamos \textit{netcat} con un puerto mayor que el 1024.
+			\begin{lstlisting}[style=consola]
+root@f5225f49f6a9:/# netcat -l 1234
+Hola
+que tal?
+			\end{lstlisting}
+			\begin{lstlisting}[style=consola]
+root@969d7f0c6a5b:/# netcat ubuntu1 1234
+Hola
+que tal?
+			\end{lstlisting}
+		\end{enumerate}
+	\end{enumerate}
+	
+{\color{red}
+
 	\subsection{Prueba de \textit{network} con nodos ROS}
 
 % WORKING ON PROGRESS --------------------------------------------------------------------
@@ -195,25 +264,85 @@ Run 'docker network COMMAND --help' for more information on a command.
 $ docker build --tag ros:ros-tutorials .
 	\end{lstlisting}
 
+	El proceso llevará unos minutos y debería producir una salida de este estilo.
+
+	\begin{lstlisting}[style=consola]
+Sending build context to Docker daemon 2.048 kB
+Step 1 : FROM ros:indigo-ros-base
+indigo-ros-base: Pulling from library/ros
+c63fb41c2213: Pull complete 
+99fcaefe76ef: Pull complete 
+5a4526e952f0: Pull complete 
+1d073211c498: Pull complete 
+e5c0f6e400a7: Pull complete 
+51e6e9c60ea0: Pull complete 
+44f5b19fd473: Pull complete 
+d94104ae0ceb: Pull complete 
+a0bfe2fb5e5b: Pull complete 
+e21ec1a20367: Pull complete 
+9fccc42aac93: Pull complete 
+97d78dea8dbe: Pull complete 
+fead7658df32: Pull complete 
+071bad8c22f3: Pull complete 
+1ed65e3358cb: Pull complete 
+e3c676f1fb89: Pull complete 
+60c5acba8ea6: Pull complete 
+2a529c59c112: Pull complete 
+Digest: sha256:e39818246f9354050e8589d3e45d94530bbf91cbe1b05e9bf3503e161a779095
+Status: Downloaded newer image for ros:indigo-ros-base
+---> 2a529c59c112
+Step 2 : RUN apt-get update && apt-get install -y
+---> Running in a1321004d6b8
+Ign http://archive.ubuntu.com trusty InRelease
+Get:1 http://archive.ubuntu.com trusty-updates InRelease [64.4 kB]
+Get:2 http://archive.ubuntu.com trusty-security InRelease [64.4 kB]
+Get:3 http://packages.ros.org trusty InRelease [4,040 B]
+Get:4 http://archive.ubuntu.com trusty Release.gpg [933 B]
+Get:5 http://archive.ubuntu.com trusty Release [58.5 kB]
+Get:6 http://archive.ubuntu.com trusty-updates/main Sources [304 kB]
+Get:7 http://packages.ros.org trusty/main amd64 Packages [563 kB]
+Get:8 http://archive.ubuntu.com trusty-updates/restricted Sources [4,513 B]
+Get:9 http://archive.ubuntu.com trusty-updates/universe Sources [180 kB]
+Get:10 http://archive.ubuntu.com trusty-updates/main amd64 Packages [809 kB]
+Get:11 http://archive.ubuntu.com trusty-updates/restricted amd64 Packages [22.7 kB]
+Get:12 http://archive.ubuntu.com trusty-updates/universe amd64 Packages [424 kB]
+Get:13 http://archive.ubuntu.com trusty-security/main Sources [123 kB]
+Get:14 http://archive.ubuntu.com trusty-security/restricted Sources [3,230 B]
+Get:15 http://archive.ubuntu.com trusty-security/universe Sources [35.4 kB]
+Get:16 http://archive.ubuntu.com trusty-security/main amd64 Packages [454 kB]
+Get:17 http://archive.ubuntu.com trusty-security/restricted amd64 Packages [19.4 kB]
+Get:18 http://archive.ubuntu.com trusty-security/universe amd64 Packages [152 kB]
+Get:19 http://archive.ubuntu.com trusty/main Sources [1,335 kB]
+Get:20 http://archive.ubuntu.com trusty/restricted Sources [5,335 B]
+Get:21 http://archive.ubuntu.com trusty/universe Sources [7,926 kB]
+Get:22 http://archive.ubuntu.com trusty/main amd64 Packages [1,743 kB]
+Get:23 http://archive.ubuntu.com trusty/restricted amd64 Packages [16.0 kB]
+Get:24 http://archive.ubuntu.com trusty/universe amd64 Packages [7,589 kB]
+Fetched 21.9 MB in 39s (557 kB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+0 upgraded, 0 newly installed, 0 to remove and 6 not upgraded.
+---> 16119b5f3975
+Removing intermediate container a1321004d6b8
+Step 3 : ROS-INDIGO-ROS-TUTORIALS 
+Unknown instruction: ROS-INDIGO-ROS-TUTORIALS
+	\end{lstlisting}
+
 	A continuación vamos a crear la red. Para ello tenemos que usar el subcomando \emph{create} de \emph{network}. Lo haremos de la siguiente manera.
 
 	\begin{lstlisting}[style=consola]
 docker network create red_ros
-dd9a08f95ed51940155daf4b9c2048bae3de5fbcc48a439fa88edefd775dcc52
+0ceb4da8bc18cc40a98bbcd423877b04a73b594216803056d3f9e10ce212d352
 	\end{lstlisting}
 	
 	Tras haber creado la red, procedemos a crear los nodos que conformarán la misma. Estos nodos serán contenedores ROS instanciados a partir de la imagen generada anteriormente.
-	
-{\color{red}
-%Now that we have a network, we can create services. Services advertise there location on the network, making it easy to resolve the location/address of the service specific container. We'll use this make sure our ROS nodes can find and connect to our ROS master.
-
-%Run services
-%To create a container for the ROS master and advertise it's service:
 
 	El primer nodo que crearemos será el nodo maestro (\emph{master}). Este será el que ejecute \emph{roscore}, que se necesario para que ROS funcione.
 
 	\begin{lstlisting}[style=consola,numbers=left]
-$ docker run -it --rm \
+$ docker run -it --rm\
              --publish-service=master.red_ros \
              --name master \
              ros:ros-tutorials \

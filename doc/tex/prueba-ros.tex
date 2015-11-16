@@ -1,5 +1,5 @@
 \chapter{Prueba con nodos ROS}
-Asumiendo que ya tenemos creadas varios nodos de ROS conectados entre si, a los cuales denominaremos como \textbf{ros1}, \textbf{ros2} y \textbf{ros3}, vamos a crear un pequeño ejemplo de este tipo para comprender mejor su funcionamiento. En el ejemplo, El publisher publicará una serie de datos, que será recibidos por el subscriber una vez se haya suscrito al topic en el que se estén publicando. Para hacerlo lo más simple posible, los datos que se pasarán serán una serie de números enteros.
+Vamos a crear un pequeño ejemplo de este tipo para comprender mejor su funcionamiento, pero con todos los nodos en el host, para asimilar el proceso de crear y probar paquetes con ROS. En el ejemplo, El publisher publicará una serie de datos, que será recibidos por el subscriber una vez se haya suscrito al topic en el que se estén publicando. Para hacerlo lo más simple posible, los datos que se pasarán serán cadenas de carácteres.
 
 Nos basaremos en uno de los ejemplos de los que disponemos en la Wiki de ROS \cite{ros-tutorials}, al que haremos unos pequeños cambios para adaptarlo.
 
@@ -173,13 +173,39 @@ Linking CXX executable /home/ander/catkin_ws/devel/lib/prueba/talker
 	
 	Esto nos generará dos ejecutables, \emph{talker} y \emph{listener}, que por defecto irán al directorio devel/lib/[nombre del paquete] de nuestro workspace.
 	
-	\begin{lstlisting}[style=consola,numbers=left]
-
-	\end{lstlisting}
-	
 	\section{Ejecución}
 	Probaremos el sistema para comprobar que funciona correctamente. Para ello haremos lo siguiente.
 	
-	\begin{lstlisting}[style=consola,numbers=left]
-	
-	\end{lstlisting}
+	\begin{enumerate}
+		\item Por una parte lanzamos \emph{roscore}.
+		\begin{lstlisting}[style=consola,numbers=left]
+$ roscore
+		\end{lstlisting}
+		
+		\item Compilamos de nuevo el workspace que tenemos creado.
+		\begin{lstlisting}[style=consola,numbers=left]
+$ cd ~/catkin_ws
+$ . devel/setup.bash
+$ catkin_make
+		\end{lstlisting}
+		
+		\item Lanzamos por otra parte el \emph{listener} de la siguiente manera.
+		\begin{lstlisting}[style=consola,numbers=left]
+$ rosrun prueba listener
+
+		\end{lstlisting}
+
+		\item Mandamos un mensaje mediante el \emph{talker}.
+		\begin{lstlisting}[style=consola,numbers=left]
+$ rostopic pub -1 /chatter std_msgs/String PruebaMensaje
+publishing and latching message for 3.0 seconds
+		\end{lstlisting}
+		
+		\begin{lstlisting}[style=consola,numbers=left]
+$ rosrun prueba listener
+[ INFO] [1447683677.299227505]: I heard: [PruebaMensaje]
+		\end{lstlisting}
+		
+		Se puede apreciar que el listener recibe el mensaje enviado por el talker.
+		
+	\end{enumerate}

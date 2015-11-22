@@ -21,6 +21,7 @@
 \usepackage{fancyhdr} % Para configurar las cabeceras y los piés de página
 \usepackage{titling} % Para usar la información del documento en otras partes de él
 \usepackage{caption}
+\usepackage{minted}
 
 %========================================================================================
 % ESTILO
@@ -82,13 +83,13 @@
 % CODIGO
 %----------------------------------------------------------------------------------------
 
+% Parte para los comandos (con lstlisting)
 \definecolor{gray95}{gray}{.95}
 \definecolor{gray85}{gray}{.80}
 \definecolor{gray45}{gray}{.45}
 \definecolor{myturquoise}{RGB}{0, 128, 128}
 \definecolor{mypink}{RGB}{177,48,112}
 \definecolor{myblue}{RGB}{56,133,231}
-
 
 \lstset{ 
 	frame=Ltb,
@@ -116,8 +117,8 @@
 }
 
 % Minimizar fragmentado de listados
-\lstnewenvironment{listing}[1][]
-{\lstset{#1}\pagebreak[0]}{\pagebreak[0]}
+%\lstnewenvironment{listing}[1][]
+%{\lstset{#1}\pagebreak[0]}{\pagebreak[0]}
 
 % Estilo de codigo para la consola
 \lstdefinestyle{consola}{
@@ -129,22 +130,5 @@
 	numbers=none,
 }
 
-% Estilo de codigo para C++
-\lstdefinestyle{cpp}{
-	language=C++,
-	breaklines=true,
-	basicstyle=\footnotesize\ttfamily,
-	backgroundcolor=\color{gray95},
-	rulesepcolor=\color{myblue},
-	numbers=none,
-}
-
-% Estilo de codigo para C++
-\lstdefinestyle{makefile}{
-	language=make,
-	breaklines=true,
-	basicstyle=\footnotesize\ttfamily,
-	backgroundcolor=\color{gray95},
-	rulesepcolor=\color{mypink},
-	numbers=none,
-}
+% Parte para el código (con minted) (minted es mejor para código que lstlisting)
+\usemintedstyle{borland}

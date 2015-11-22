@@ -7,13 +7,34 @@ Nos basaremos en uno de los ejemplos de los que disponemos en la Wiki de ROS \ci
 	El código se divide en dos ficheros .cpp en los que tendremos por una parte el publisher y en la otra el subscriber.	Tendremos un tercer ahrivo más, que será el archivo CMakeLists.txt que nos servirá a la hora de construir el paquete.
 	
 		\subsection{Publisher}
-		\lstinputlisting[style=cpp,numbers=left]{../code/pub-sub-example/talker.cpp}
-		
+		\inputminted[
+		frame=single,
+		framesep=2mm,
+		baselinestretch=1.2,
+		fontsize=\footnotesize,
+		linenos,
+		breaklines
+		]{c++}{../code/pub-sub-example/talker.cpp}
+
 		\subsection{Subscriber}
-		\lstinputlisting[style=cpp,numbers=left]{../code/pub-sub-example/listener.cpp}
-		
+		\inputminted[
+		frame=single,
+		framesep=2mm,
+		baselinestretch=1.2,
+		fontsize=\footnotesize,
+		linenos,
+		breaklines
+		]{c++}{../code/pub-sub-example/listener.cpp}
+
 		\subsection{CMakeLists}
-		\lstinputlisting[style=makefile,numbers=left]{../code/pub-sub-example/CMakeLists.txt}
+		\inputminted[
+		frame=single,
+		framesep=2mm,
+		baselinestretch=1.2,
+		fontsize=\footnotesize,
+		linenos,
+		breaklines
+		]{cmake}{../code/pub-sub-example/CMakeLists.txt}
 	
 	\section{Construir el paquete}
 	Una vez programado el sistema, pasamos a compilarlo y construirlo. Basándonos en lo que se comentó en el capítulo anterior, lo haremos de la siguiente manera.

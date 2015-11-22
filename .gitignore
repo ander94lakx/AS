@@ -8,3 +8,5 @@ doc/figuras/Thumbs.db
 *.out
 doc/main.lof
 *.blg
+doc/_minted-main
+doc/main.lol

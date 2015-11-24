@@ -1,8 +1,8 @@
 \chapter{Creación del sistema}
 
-El sistema que vamos a crear constará de las siguientes partes. Primero sobre las máquinas con SO Windows se instalará una máquina virtual Ubuntu sobre Virtualbox para trabajar en un entorno linux. A día de hoy existen formas de trabajar directamente con Docker en sistemas Windows tanto por CLI como a través de una interfaz gráfica, aunque estas se basan en emular el kernel de linux. Para este caso se ha optado por trabajar en un entorno linux conocido para hacer más simple el despligue del sistema.
+El sistema que vamos a crear constará de las siguientes partes. Primero sobre las máquinas con SO Windows se instalará una máquina virtual Ubuntu sobre Virtualbox para trabajar en un entorno linux. A día de hoy existen formas de trabajar directamente con Docker en sistemas Windows tanto por CLI (Command Line Interface) como a través de una interfaz gráfica, aunque éstas se basan en emular el kernel de linux. Para este caso se ha optado por trabajar en un entorno linux conocido para hacer más simple el despligue del sistema.
 
-Dentro de dicha máquina Ubuntu se instalará el propio Docker. Mediante Docker crearemos diferentes contenedores. Cada uno de esos contenedores se crearán a partir de una imagen de Ubuntu que vendrá con ROS instalado. Esa imagen sera la que aparece en el Docker Hub como \emph{osrf/ros:indigo-desktop}. Estas máquinas se comunicarán entre ellas mediante OpenVPN. Esta red OpenVPN sera configurada en un contenedor diferente, y sera la red a la que el resto de contenedores se conecten.
+Dentro de dicha máquina Ubuntu se instalará el propio Docker. Mediante Docker crearemos diferentes contenedores. Cada uno de esos contenedores se crearán a partir de una imagen de Ubuntu que vendrá con ROS instalado. Esa imagen sera la que aparece en el Docker Hub como \emph{osrf/ros:indigo-desktop}. Estas máquinas se comunicarán entre ellas mediante una red creada con la herramienta \emph{network} de Docker.
 
 El esquema del sistema vendría a ser el que se muestra en la Figura \ref{fig:esquemaOriginal}.
 \begin{figure}[H] % Con el parámetro H la imagens se muestra justo en el sitio en el que se ha definido
@@ -84,3 +84,6 @@ root@9d1dbcbf599c:~/# rosrun prueba listener
 		\end{enumerate}
 		
 	\end{enumerate}
+	
+	\section{transmisión de imágenes de una Webcam}
+	{\color{red}... en desarrollo}

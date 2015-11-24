@@ -1,49 +1,51 @@
-\chapter{Networking en Docker}
-Con Docker podemos crear una gran cantidad de contenedores diferentes que se ejecuten de manera simultánea. Es lógico que a la hora de crear un sistema nos interese comunicar los contenedores entre ellos para que puedan transmitirse información. Como vamos a construir un sistema de paso mensajes entre contenedores con ROS (cómo usaremos ROS lo veremos en el siguiente capítulo) necesitamos crear una red entre esos contenedores. Para ello, en este capítulo se explicaran diferentes conceptos sobre configuración de redes en Docker.
+\chapter{Redes en Docker}
+Con Docker podemos crear una gran cantidad de contenedores diferentes que se ejecuten de manera simultánea. Es lógico que a la hora de crear un sistema nos interese comunicar los contenedores entre ellos para que puedan transmitirse información. Como vamos a construir un sistema de paso mensajes entre contenedores con ROS (cómo usaremos ROS lo veremos en el siguiente capítulo) necesitamos crear una red entre esos contenedores. Para ello, en este capítulo se explicaran diferentes conceptos sobre configuración de redes en Docker. Por una parte se explican cosas básicas sobre redes con Docker y por otra parte herramientas más complejas que provee Docker (como \emph{ntework} o \emph{swarm}) para crear redes con topologías más complejas o redes multihost.
 
-	\section{\textit{docker0}}
-	Lo primero que hay que saber es que al iniciarse Docker, por defecto, se crea en el anfitrión (host) una interfaz virtual que tiene como nombre \textbf{\emph{docker0}} \cite{docker-network-advanced}. Docker coge de manera aleatoria una dirección IP y una subred de rango privado y se la asigna a \emph{docker0}. Las direcciones MAC de los contenedores se asignan usando la dirección IP de canda contenedor, para evitar de esta manera colisiones ARP.
-	
-	Lo que hace especial a \emph{docker0}, es que no solo es una interfaz, sino que es un puente Ethernet virtual que redirige automáticamente los paquetes entre cualquier otra interfaz que esté conectada a él. De esta manera se pueden comunicar tanto los contenedores entre ellos como con el host.
-	
-	Además desde un contenedor también se puede acceder a internet. En el capítulo anterior lanzamos contenedores que se creaban mediante los Dockerfiles que se obtenían del Docker Hub, que es un servidor web que se encuentra en internet. 
-	
-	Sin embargo, \textbf{no} podemos acceder a los contenedores desde fuera, desde internet. Por defecto está 
-	establecido así, principalmente por temas de seguridad, aunque obviamente se puede cambiar.
-	
-	\section{Prueba de conexión entre contenedores}
-	Si todos los contenedores que creamos se encuentran en una misma subred, podemos comunicarnos entre ellos simplemente con sus direcciones IP privadas o sus nombres de red. Vamos a hacer varias pruebas para comprobar que los contenedores se comunican bien entre ellos.
-	
-		\subsection{\textit{ping}}
-		La forma más sencilla para probar la comunicación entre dos sistemas es el uso de la herramienta \emph{ping} de linux.
+	\section{Redes básicas en Docker}
+
+		\subsection{\textit{docker0}}
+		Lo primero que hay que saber es que al iniciarse Docker, por defecto, se crea en el anfitrión (host) una interfaz virtual que tiene como nombre \textbf{\emph{docker0}} \cite{docker-network-advanced}. Docker coge de manera aleatoria una dirección IP y una subred de rango privado y se la asigna a \emph{docker0}. Las direcciones MAC de los contenedores se asignan usando la dirección IP de canda contenedor, para evitar de esta manera colisiones ARP.
 		
-		Vamos a lanzar por una parte dos contenedores Docker en dos terminales separadas. Para esta prueba usaremos la misma imagen que vamos a usar para crear nuestro sistema, que es la imagen \emph{osrf/ros:indigo-desktop}, a la que previamente hemos hecho un \emph{pull} para tenerla generada, ya que ocupa alrededor de 1,6 GB. Creamos los contenedores de la siguiente manera.
+		Lo que hace especial a \emph{docker0}, es que no solo es una interfaz, sino que es un puente Ethernet virtual que redirige automáticamente los paquetes entre cualquier otra interfaz que esté conectada a él. De esta manera se pueden comunicar tanto los contenedores entre ellos como con el host.
 		
-		\begin{lstlisting}[style=consola]
+		Además desde un contenedor también se puede acceder a internet. En el capítulo anterior lanzamos contenedores que se creaban mediante los Dockerfiles que se obtenían del Docker Hub, que es un servidor web que se encuentra en internet. 
+		
+		Sin embargo, \textbf{no} podemos acceder a los contenedores desde fuera, desde internet. Por defecto está 
+		establecido así, principalmente por temas de seguridad, aunque obviamente se puede cambiar.
+		
+		\subsection{Prueba de conexión entre contenedores}
+		Si todos los contenedores que creamos se encuentran en una misma subred, podemos comunicarnos entre ellos simplemente con sus direcciones IP privadas o sus nombres de red. Vamos a hacer varias pruebas para comprobar que los contenedores se comunican bien entre ellos.
+		
+			\subsubsection{\textit{ping}}
+			La forma más sencilla para probar la comunicación entre dos sistemas es el uso de la herramienta \emph{ping} de linux.
+			
+			Vamos a lanzar por una parte dos contenedores Docker en dos terminales separadas. Para esta prueba usaremos la misma imagen que vamos a usar para crear nuestro sistema, que es la imagen \emph{osrf/ros:indigo-desktop}, a la que previamente hemos hecho un \emph{pull} para tenerla generada, ya que ocupa alrededor de 1,6 GB. Creamos los contenedores de la siguiente manera.
+			
+			\begin{lstlisting}[style=consola]
 $ docker run -it osrf/ros:indigo-desktop /bin/bash
-		\end{lstlisting}
-		
-		Desde fuera comprobamos que tenemos los contenedores en ejecución.
-		
-		\begin{lstlisting}[style=consola,numbers=left]
+			\end{lstlisting}
+			
+			Desde fuera comprobamos que tenemos los contenedores en ejecución.
+			
+			\begin{lstlisting}[style=consola,numbers=left]
 $ docker ps
 CONTAINER ID        IMAGE                     COMMAND                  CREATED             STATUS              PORTS               NAMES
 829a49bb2cfa        osrf/ros:indigo-desktop   "/ros_entrypoint.sh /"   6 seconds ago       Up 6 seconds                            compassionate_mccarthy
 2f3c19da0cb8        osrf/ros:indigo-desktop   "/ros_entrypoint.sh /"   16 seconds ago      Up 16 seconds                           grave_mahavira
-		\end{lstlisting}
-		
-		Podemos obtener la dirección IP de un contenedor tanto desde fuera como desde dentro de Docker. En este caso lo haremos desde fuera mediante el \emph{inspect} de Docker.
-		
-		\begin{lstlisting}[style=consola,numbers=left]
+			\end{lstlisting}
+			
+			Podemos obtener la dirección IP de un contenedor tanto desde fuera como desde dentro de Docker. En este caso lo haremos desde fuera mediante el \emph{inspect} de Docker.
+			
+			\begin{lstlisting}[style=consola,numbers=left]
 $ docker inspect --format='{{.NetworkSettings.IPAddress}}' compassionate_mccarthy
 172.17.0.5
 $ docker inspect --format='{{.NetworkSettings.IPAddress}}' grave_mahavira
 172.17.0.4
-		\end{lstlisting}
-		
-		Ya tenemos las direcciones IP privadas que genera \emph{docker0} para los dos contenedores. Ahora probamos a hacer un ping desde un contenedor a otro. Desde el contenedor \textit{grave\_mahavira} con IP 172.17.0.4 al contenedor \textit{compassionate\_mccarthy} con IP 172.17.0.5 se haría así.
-		
-		\begin{lstlisting}[style=consola,numbers=left]
+			\end{lstlisting}
+			
+			Ya tenemos las direcciones IP privadas que genera \emph{docker0} para los dos contenedores. Ahora probamos a hacer un ping desde un contenedor a otro. Desde el contenedor \textit{grave\_mahavira} con IP 172.17.0.4 al contenedor \textit{compassionate\_mccarthy} con IP 172.17.0.5 se haría así.
+			
+			\begin{lstlisting}[style=consola,numbers=left]
 root@2f3c19da0cb8:/# ping 172.17.0.5
 PING 172.17.0.5 (172.17.0.5) 56(84) bytes of data.
 64 bytes from 172.17.0.5: icmp_seq=1 ttl=64 time=0.085 ms
@@ -56,11 +58,11 @@ PING 172.17.0.5 (172.17.0.5) 56(84) bytes of data.
 --- 172.17.0.5 ping statistics ---
 6 packets transmitted, 6 received, 0% packet loss, time 4997ms
 rtt min/avg/max/mdev = 0.058/0.084/0.135/0.028 ms
-		\end{lstlisting}
-		
-		Se puede hacer exactamente lo mismo con los nombres de los contenedores docker ya que esto son los nombres que se le dan en la red \emph{docker0} a la que están conectados. En este caso haremos un ping desde \textit{compassionate\_mccarthy} a \textit{grave\_mahavira} usando para ello el nombre del contenedor.
-		
-		\begin{lstlisting}[style=consola,numbers=left]
+			\end{lstlisting}
+			
+			Se puede hacer exactamente lo mismo con los nombres de los contenedores docker ya que esto son los nombres que se le dan en la red \emph{docker0} a la que están conectados. En este caso haremos un ping desde \textit{compassionate\_mccarthy} a \textit{grave\_mahavira} usando para ello el nombre del contenedor.
+			
+			\begin{lstlisting}[style=consola,numbers=left]
 root@829a49bb2cfa:/# ping grave_mahavira
 PING grave_mahavira (172.17.0.4) 56(84) bytes of data.
 64 bytes from grave_mahavira.bridge (172.17.0.4): icmp_seq=1 ttl=64 time=0.087 ms
@@ -73,97 +75,96 @@ PING grave_mahavira (172.17.0.4) 56(84) bytes of data.
 --- grave_mahavira ping statistics ---
 6 packets transmitted, 6 received, 0% packet loss, time 5001ms
 rtt min/avg/max/mdev = 0.064/0.069/0.087/0.010 ms
-		\end{lstlisting}
-		
-		Debido a esto, los nombres que se usan en los contendores deben ser \textbf{únicos}. Debemos tenerlo en cuanta a la hora de renombrar los contenedores. Tampoco podemos cambiar el nombre de un  contenedor durante su ejecucíon, solo podremos nombrarlo al lanzarlo.
-		
-		\subsection{\textit{netcat}}
-		Otra forma de probar conexiones algo más versátil es el uso de \emph{netcat}. Netcat permite probar conexiones con cualquier tipo de puerto. Para probar que podemos usar cualquier puerto de los que no están predefinidos, vamos a usar la herramienta usando un puerto cualquiera de los que tenemos disponibles. En este caso lo haremos usando el puerto 1234. Para probarlo haremos lo siguiente.
-		
-		\begin{enumerate}
-			\item Ejecutaremos en uno de los contenedores (da igual cual, la comunicación que se establecerá será bidireccional) netcat en modo escucha. En este caso lo haremos en \textit{grave\_mahavira}.
-				\begin{lstlisting}[style=consola]
-root@2f3c19da0cb8:/# netcat -l 1234
-
-				\end{lstlisting}
-			\item Desde el otro contenedor (\textit{compassionate\_mccarthy}) nos intentaremos conectar al primero.
-				\begin{lstlisting}[style=consola]
-root@829a49bb2cfa:/# netcat grave_mahavira 1234
-
-				\end{lstlisting}			
-			\item Si todo ha salido bien, podremos escribir desde cualquiera de los dos terminales y aparecerá lo introducido en el otro.
+			\end{lstlisting}
+			
+			Debido a esto, los nombres que se usan en los contendores deben ser \textbf{únicos}. Debemos tenerlo en cuanta a la hora de renombrar los contenedores. Tampoco podemos cambiar el nombre de un  contenedor durante su ejecucíon, solo podremos nombrarlo al lanzarlo.
+			
+			\subsubsection{\textit{netcat}}
+			Otra forma de probar conexiones algo más versátil es el uso de \emph{netcat}. Netcat permite probar conexiones con cualquier tipo de puerto. Para probar que podemos usar cualquier puerto de los que no están predefinidos, vamos a usar la herramienta usando un puerto cualquiera de los que tenemos disponibles. En este caso lo haremos usando el puerto 1234. Para probarlo haremos lo siguiente.
+			
 			\begin{enumerate}
-				\item Escribimos en \textit{grave\_mahavira}.
-				\begin{lstlisting}[style=consola]
+				\item Ejecutaremos en uno de los contenedores (da igual cual, la comunicación que se establecerá será bidireccional) netcat en modo escucha. En este caso lo haremos en \textit{grave\_mahavira}.
+					\begin{lstlisting}[style=consola]
+root@2f3c19da0cb8:/# netcat -l 1234
+
+					\end{lstlisting}
+				\item Desde el otro contenedor (\textit{compassionate\_mccarthy}) nos intentaremos conectar al primero.
+					\begin{lstlisting}[style=consola]
+root@829a49bb2cfa:/# netcat grave_mahavira 1234
+
+					\end{lstlisting}			
+				\item Si todo ha salido bien, podremos escribir desde cualquiera de los dos terminales y aparecerá lo introducido en el otro.
+				\begin{enumerate}
+					\item Escribimos en \textit{grave\_mahavira}.
+					\begin{lstlisting}[style=consola]
 root@2f3c19da0cb8:/# netcat -l 1234
 Hola!
 
-				\end{lstlisting}
-				\begin{lstlisting}[style=consola]
+					\end{lstlisting}
+					\begin{lstlisting}[style=consola]
 root@829a49bb2cfa:/# netcat grave_mahavira 1234
 Hola!
 
-				\end{lstlisting}	
-				\item Y ahora en \textit{compassionate\_mccarthy}
-				\begin{lstlisting}[style=consola]
+					\end{lstlisting}	
+					\item Y ahora en \textit{compassionate\_mccarthy}
+					\begin{lstlisting}[style=consola]
 root@2f3c19da0cb8:/# netcat -l 1234
 Hola!
 Hola de nuevo!				
-				
-				\end{lstlisting}
-				\begin{lstlisting}[style=consola]
+					
+					\end{lstlisting}
+					\begin{lstlisting}[style=consola]
 root@829a49bb2cfa:/# netcat grave_mahavira 1234
 Hola!
 Hola de nuevo!
-
-				\end{lstlisting}
+	
+					\end{lstlisting}
+				\end{enumerate}
 			\end{enumerate}
-		\end{enumerate}
-	
-	\section{Links entre contenedores}
-	Como hemos visto, a causa de tener los contenedores dentro de una red privada, comunicarlos entre ellos es algo trivial. El problema de transmitir información de esta manera es que el interfaz \emph{docker0} se usa para \textbf{todos} los contenedores que estén en ejecución en ese host. Si queremos realizar una comunicación privada entre dos contenedores, que sea invisible para el resto de contenedores, debemos usar el mecanismo que provee Docker, el linkado de contenedores \cite{docker-network-linking}.
-	
-	Docker provee también un sistema para mapear puertos entre dos contenedores, aunque el mejor sistema que podemos usar para conectar contendores el el linkado, ya que abstrae todo el sistema de puertos, y crea un puente virtual que permite una comunicación segura entre los contenedores.
-	
-	Para usar el sistema de links de Docker, debemos usar el flag \textbf{--link} a la hora de lanzar el contenedor. Primero vamos a crear un contenedor al que llamaremos ros1.
-	
-	\begin{lstlisting}[style=consola]
+		
+		\subsection{Links entre contenedores}
+		Como hemos visto, a causa de tener los contenedores dentro de una red privada, comunicarlos entre ellos es algo trivial. El problema de transmitir información de esta manera es que el interfaz \emph{docker0} se usa para \textbf{todos} los contenedores que estén en ejecución en ese host. Si queremos realizar una comunicación privada entre dos contenedores, que sea invisible para el resto de contenedores, debemos usar el mecanismo que provee Docker, el linkado de contenedores \cite{docker-network-linking}.
+		
+		Docker provee también un sistema para mapear puertos entre dos contenedores, aunque el mejor sistema que podemos usar para conectar contendores el el linkado, ya que abstrae todo el sistema de puertos, y crea un puente virtual que permite una comunicación segura entre los contenedores.
+		
+		Para usar el sistema de links de Docker, debemos usar el flag \textbf{--link} a la hora de lanzar el contenedor. Primero vamos a crear un contenedor al que llamaremos ros1.
+		
+		\begin{lstlisting}[style=consola]
 $ docker run -it --name ros1 osrf/ros:indigo-desktop /bin/bash
-	\end{lstlisting}
-	
-	A continuación vamos a crear otro contenedor, al que llamaremos \emph{ros2}, que este linkado a \emph{ros1}.
-	
-	\begin{lstlisting}[style=consola]
+		\end{lstlisting}
+		
+		A continuación vamos a crear otro contenedor, al que llamaremos \emph{ros2}, que este linkado a \emph{ros1}.
+		
+		\begin{lstlisting}[style=consola]
 $ docker run -it --name ros2 --link ros1 osrf/ros:indigo-desktop /bin/bash
-	\end{lstlisting}
-	
-	Ahora desde fuera de los contenedores, miramos los links que tiene \emph{ros2} mediante \emph{inspect}.
-	
-	\begin{lstlisting}[style=consola,numbers=left]
+		\end{lstlisting}
+		
+		Ahora desde fuera de los contenedores, miramos los links que tiene \emph{ros2} mediante \emph{inspect}.
+		
+		\begin{lstlisting}[style=consola,numbers=left]
 $ docker inspect -f "{{ .HostConfig.Links }}" ros2
 [/ros1:/ros2/ros1]
-	\end{lstlisting}
+		\end{lstlisting}
+		
+		Ahora desde \emph{ros2} podemos acceder a la información de \emph{ros1}.
+		
+		Para lograr este enlace Docker usa dos sistemas diferentes:
+		
+		\begin{itemize}
+			\item Variables de entorno
+			\item Actualizar el fichero \emph{/etc/hosts}
+		\end{itemize}
+		
+		Todo esto lo realiza de manera automática a la hora de enlazar dos contenedores.
 	
-	Ahora desde \emph{ros2} podemos acceder a la información de \emph{ros1}.
+	\section{Redes avanzadas con Docker}
 	
-	Para lograr este enlace Docker usa dos sistemas diferentes:
-	
-	\begin{itemize}
-		\item Variables de entorno
-		\item Actualizar el fichero \emph{/etc/hosts}
-	\end{itemize}
-	
-	Todo esto lo realiza de manera automática a la hora de enlazar dos contenedores.
-	
-
-	
-	\section{\textit{network} de Docker}
-
-	En la verión 1.9 de Docker (la que se usa en este documento) se implementó una nueva funcionalidad que llevaba gestándose desde que salió la versión 1.7. Esta nueva funcionalidad permite crear redes con diferentes topologías de una manera sencilla, abstrayendo de configuraciones, al igual que los links de Docker. A diferencia de los links de Docker, que está más orientados a conectar directamente contenedores, esta nueva funcionalidad permite crear redes virtuales enteras.
-	
-	La forma de trabajar con esta funcionalidad es mediante el uso del comando \textit{\emph{network}}.
-	
-	\begin{lstlisting}[style=consola]
+		\subsection{\textit{network} de Docker}
+		En la verión 1.9 de Docker (la que se usa en este documento) se implementó una nueva funcionalidad que llevaba gestándose desde que salió la versión 1.7. Esta nueva funcionalidad permite crear redes con diferentes topologías de una manera sencilla, abstrayendo de configuraciones, al igual que los links de Docker. A diferencia de los links de Docker, que está más orientados a conectar directamente contenedores, esta nueva funcionalidad permite crear redes virtuales enteras.
+		
+		La forma de trabajar con esta funcionalidad es mediante el uso del comando \textit{\emph{network}}.
+		
+		\begin{lstlisting}[style=consola]
 $ docker network --help
 
 Usage:	docker network [OPTIONS] COMMAND [OPTIONS]
@@ -179,38 +180,38 @@ connect                  Connect container to a network
 Run 'docker network COMMAND --help' for more information on a command.
 
 --help=false       Print usage
-	\end{lstlisting}
-	
-	\subsection{Prueba de \textit{network}}
-	Vamos a crear una red a la que posteriormente vamos a unir dos contedores cualquiera (Ubuntu mismo) y haremos pruebas como las anteriores para comprobar que funciona la red que hemos creado.
-	
-	\begin{enumerate}
-		\item Creamos la red.
-		\begin{lstlisting}[style=consola]
+		\end{lstlisting}
+		
+			\subsubsection{Prueba de \textit{network}}
+			Vamos a crear una red a la que posteriormente vamos a unir dos contedores cualquiera (Ubuntu mismo) y haremos pruebas como las anteriores para comprobar que funciona la red que hemos creado.
+			
+			\begin{enumerate}
+				\item Creamos la red.
+				\begin{lstlisting}[style=consola]
 $ docker network create red-prueba
 6a9b1bceb5e8033744d4220da1c2e144aea9543bdea0804af0261d973b7bd57e
-		\end{lstlisting}
-	
-		\item Creamos dos contenedores Docker.
-		\begin{lstlisting}[style=consola]
+				\end{lstlisting}
+			
+				\item Creamos dos contenedores Docker.
+				\begin{lstlisting}[style=consola]
 $ docker run -it --name ubuntu1 ubuntu /bin/bash
 root@f5225f49f6a9:/# 
-		\end{lstlisting}
-		\begin{lstlisting}[style=consola]
+				\end{lstlisting}
+				\begin{lstlisting}[style=consola]
 $ docker run -it --name ubuntu2 ubuntu /bin/bash
 root@969d7f0c6a5b:/# 
-		\end{lstlisting}
-		
-		\item Añadimos desde el host los dos contendores Docker a la red. Esto se puede hacer de dos maneras. Se puede indicar la red a la que conectarse en el momento en el que creamos el contenedor o se puede hacer después mediante el subcomando \emph{connect} que tiene \emph{network}. Lo haremos de la segunda manera ya que nos permite usar contenedores ya creados.
-		\begin{lstlisting}[style=consola]
+				\end{lstlisting}
+				
+				\item Añadimos desde el host los dos contendores Docker a la red. Esto se puede hacer de dos maneras. Se puede indicar la red a la que conectarse en el momento en el que creamos el contenedor o se puede hacer después mediante el subcomando \emph{connect} que tiene \emph{network}. Lo haremos de la segunda manera ya que nos permite usar contenedores ya creados.
+				\begin{lstlisting}[style=consola]
 $ docker network connect red-prueba ubuntu1
 $ docker network connect red-prueba ubuntu2 
-		\end{lstlisting}
-		
-		\item Probamos la conexión desde los contenedores
-		\begin{enumerate}
-			\item Hacemos \textit{ping} entre los contenedores.
-			\begin{lstlisting}[style=consola]
+				\end{lstlisting}
+				
+				\item Probamos la conexión desde los contenedores
+				\begin{enumerate}
+					\item Hacemos \textit{ping} entre los contenedores.
+					\begin{lstlisting}[style=consola,numbers=left]
 root@f5225f49f6a9:/# ping ubuntu2
 PING ubuntu2 (172.19.0.3) 56(84) bytes of data.
 64 bytes from ubuntu2 (172.19.0.3): icmp_seq=1 ttl=64 time=0.144 ms
@@ -220,8 +221,8 @@ PING ubuntu2 (172.19.0.3) 56(84) bytes of data.
 --- ubuntu2 ping statistics ---
 3 packets transmitted, 3 received, 0% packet loss, time 1998ms
 rtt min/avg/max/mdev = 0.066/0.092/0.144/0.036 ms
-			\end{lstlisting}
-			\begin{lstlisting}[style=consola]
+					\end{lstlisting}
+					\begin{lstlisting}[style=consola,numbers=left]
 root@969d7f0c6a5b:/# ping ubuntu1
 PING ubuntu1 (172.19.0.2) 56(84) bytes of data.
 64 bytes from ubuntu1 (172.19.0.2): icmp_seq=1 ttl=64 time=0.062 ms
@@ -232,21 +233,25 @@ PING ubuntu1 (172.19.0.2) 56(84) bytes of data.
 --- ubuntu1 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time 2999ms
 rtt min/avg/max/mdev = 0.060/0.066/0.077/0.010 ms
-			\end{lstlisting}
-			
-			\item Usamos \textit{netcat} con un puerto mayor que el 1024.
-			\begin{lstlisting}[style=consola]
+					\end{lstlisting}
+					
+					\item Usamos \textit{netcat} con un puerto mayor que el 1024.
+					\begin{lstlisting}[style=consola]
 root@f5225f49f6a9:/# netcat -l 1234
 Hola
 que tal?
-			\end{lstlisting}
-			\begin{lstlisting}[style=consola]
+					\end{lstlisting}
+					\begin{lstlisting}[style=consola]
 root@969d7f0c6a5b:/# netcat ubuntu1 1234
 Hola
 que tal?
-			\end{lstlisting}
-		\end{enumerate}
-	\end{enumerate}
+					\end{lstlisting}
+				\end{enumerate}
+			\end{enumerate}
+			
+		\subsection{Redes Multi-Host}
+		 {\color{red}... en desarrollo}
+		
 	
 	\section{Configuración manual de redes}
 	Aunque en este capítulo se han enseñado varios mecanismos que provee Docker para administrar redes de contenedores, también podemos configurar toda nuestra red de una manera más tradicional, mediante la modificación de archivos como \emph{/etc/hosts} o \emph{/etc/interfaces} en nuestros contenedores, el uso de \emph{Iptables}, configuración de DNS,... 

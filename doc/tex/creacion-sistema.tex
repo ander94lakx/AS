@@ -69,7 +69,7 @@ root@ee37147629e4:~/catkin_ws# export ROS_IP=172.18.0.3
 			
 			\item Con todo el ejemplo creado y compilado dentro de \emph{ros1} y \emph{ros2}, lanzamos en \emph{ros1} el listener.
 			\begin{lstlisting}[style=consola]
-root@9d1dbcbf599c:~/# rosrun prueba listener	
+root@ee37147629e4:~/# rosrun prueba listener	
 			\end{lstlisting}
 			
 			\item Y probamos a escribir mediante el talker.
@@ -86,4 +86,104 @@ root@9d1dbcbf599c:~/# rosrun prueba listener
 	\end{enumerate}
 	
 	\section{Aplicaciones para el sistema}
-		{\color{red} ...en desarrollo}
+	Una vez creado el sistema solo faltaria programarlo para que haga lo que nosotros queramos. En el mundo de la robótica existen una gran cantidad de utilidades para implementar, desde movimientos de piezas o de partes, recogida de información de sensores,...
+	
+	Como no se pretende en este documento crear aplicaciones robóticas concretas, nos vamos a limitar a mostrar un ejemplo de aplicación para nuestro sistema. En este caso se ha optado por obtener imágenes de una Webcam, un ejemplo sencillo a la par que útil.
+		
+		\subsection{Obtener imágenes de una Webcam}
+		Lo primero que hay que tener en cuenta es que para que nuestra máquina virtual detecte la Webcam es necesario instalar el \textit{Oracle VM VirtualBox Extension Pack}. Es una extensión de VirtualBox que permite que las máquinas virtuales interactúen con dispositivos USB 2.0 y 3.0, controladores Bluetooth o Webcams integradas, entre otros.
+		
+		Una vez instalado hay que habilitar la Webcam desde las opciones de VirtualBox. Para ello la seleccionamos en el menú Webcam de la sección Devices de nuestra máquina virtual, ta y como aparece en la Figura \ref{fig:VBoxWebcam}.
+		\begin{figure}[H]
+			\centering
+			\includegraphics{VBoxWebcam}
+			\caption{Activación de la Webcam en VirtualBox}
+			\label{fig:VBoxWebcam}
+		\end{figure}
+		
+		Para obtener imágenes de una Webcam haremos lo siguiente.
+		\begin{enumerate}
+			\item Lanzamos \emph{roscore} en \emph{ros0}.
+			\begin{lstlisting}[style=consola]
+root@d55b47478e2c:/# roscore
+			\end{lstlisting}
+			
+			\item En \emph{ros1} y \emph{ros2} configuramos la variable que indica donde se está ejecutando \emph{roscore}
+			\begin{lstlisting}[style=consola]
+$ ROS_MASTER_URI=http://ros0:11311/
+			\end{lstlisting}
+			
+			\item En cualquiera de los otros nodos, por ejemplo en \emph{ros1}, añadiremos el paquete \textit{usb\_cam} de ROS a workspace de catkin de ese contenedor de la siguiente manera:
+			\begin{lstlisting}[style=consola,numbers=left]
+root@ee37147629e4:~/catkin_ws# cd src
+root@ee37147629e4:~/catkin_ws/src# git clone "https://github.com/bosch-ros-pkg/usb_cam.git"
+root@ee37147629e4:~/catkin_ws/src# cd ..
+root@ee37147629e4:~/catkin_ws# catkin_make
+#
+# Se omite la salida de la compilacion por ser demasiado larga
+#
+			\end{lstlisting}
+			
+			\item Lanzamos el ejemplo que nos incluye el paquete para probar su funcionamiento.
+			\begin{lstlisting}[style=consola,numbers=left]
+root@ee37147629e4:~/catkin_ws/# cd src/usb_cam/launch
+root@ee37147629e4:~/catkin_ws/src/usb_cam/launch# roslaunch usb_cam-test.launch
+... logging to /root/.ros/log/55cdb074-bce6-11e5-9018-0242ac110002/roslaunch-ee37147629e4-221.log
+Checking log directory for disk usage. This may take awhile.
+Press Ctrl-C to interrupt
+Done checking log file disk usage. Usage is <1GB.
+
+started roslaunch server http://ee37147629e4:39700/
+
+SUMMARY
+========
+
+PARAMETERS
+* /rosdistro: indigo
+* /rosversion: 1.11.13
+* /usb_cam/camera_frame_id: usb_cam
+* /usb_cam/image_height: 480
+* /usb_cam/image_width: 640
+* /usb_cam/io_method: mmap
+* /usb_cam/pixel_format: mjpeg
+* /usb_cam/video_device: /dev/video0
+
+NODES
+/
+image_view (image_view/image_view)
+usb_cam (usb_cam/usb_cam_node)
+
+ROS_MASTER_URI=http://ros0:11311/
+
+core service [/rosout] found
+			\end{lstlisting}
+			
+			\item Si todo ha ido bien, debería aparece una ventana como la que aparece en la Figura \ref{fig:VBoxWebcam2}, en la que aparecerá la imágen de la Webcam.
+			\begin{figure}[H]
+				\centering
+				\includegraphics{VBoxWebcam2}
+				\caption{Ventana con la imagen de la Webcam}
+				\label{fig:VBoxWebcam2}
+			\end{figure}
+			
+		\end{enumerate}
+		
+		\subsection{Otras aplicaciones}
+		A parte de la captura de imágenes de una Webcam, podemos elaborar una serie de aplicaciones con ROS, basandonos o no en librerías existentes, que se basen en áreas como por ejemplo \cite{ros-wikipedia}:
+		\begin{itemize}
+			\item Percepción
+			\item Identificación de Objetos
+			\item Segmentación y reconocimiento
+			\item Reconocimiento facial
+			\item Reconocimiento de gestos
+			\item Seguimiento de objetos
+			\item Egomoción
+			\item Comprensión de movimiento
+			\item Estructura de movimientos (SFM)
+			\item Visión estéreo: percepción de profundidad mediante el uso de dos cámaras
+			\item Movimientos
+			\item Robots móviles
+			\item Control
+			\item Planificación
+			\item Agarre de objetos
+		\end{itemize}

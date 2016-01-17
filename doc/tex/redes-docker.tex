@@ -250,8 +250,319 @@ que tal?
 			\end{enumerate}
 			
 		\subsection{Redes Multi-Host}
-		 {\color{red}... en desarrollo}
+		Para crear redes Multi-Host con Docker lo mejor es usar Docker Swarm. Docker Swarm es una herramienta que provee Docker que sirve para crear clusters de contenedores Docker. Para crear redes Multi-Host con esta herramienta necesitamos instalar en el host lo siguiente:
 		
+		\begin{enumerate}
+			\item \textbf{VirtualBox}.
+			\item \textbf{Docker Machine}. Docker Machine es un software proporcionado por los creadores de Docker que nos permite crear diferentes hosts en un mismo sistema. \cite{docker-machine} Permite lanzar demonios del proceso \textit{docker} independientes entre sí.
+		\end{enumerate}
+		
+		En caso de usar Docker desde OS X o desde Windows deberíamos tener ya VirtualBox instalado.
+		
+			\subsubsection{Instalación de Swarm}
+			Para instalar las herramientas necesarias (en un sistema GNU-Linux) haremos lo siguiente:
+			\begin{itemize}
+				\item Instalamos VirtualBox desde el gestor de paquetes. Para Debian y derivados usamos apt-get.
+				\begin{lstlisting}[style=consola]
+$ sudo apt-get install virtualbox
+				\end{lstlisting}
+				\item Para instalar Docker Machine hay que seguir los siguientes pasos: \cite{docker-machine-install}
+				\begin{enumerate}
+					\item Instalamos Docker Machine con el siguiente comando (instala la versión  v0.5.0, que al escribir este documento es la última versión).
+					\begin{lstlisting}[style=consola,numbers=left]
+$ curl -L https://github.com/docker/machine/releases/download/v0.5.0/docker-machine_linux-amd64.zip >machine.zip && \
+unzip machine.zip && \
+rm machine.zip && \
+sudo mv docker-machine* /usr/local/bin
+					\end{lstlisting}
+					\item Comprobamos que se ha instalado correctamente mediante el siguiente comando.
+					\begin{lstlisting}[style=consola,numbers=left]
+$ docker-machine -v
+docker-machine version 0.5.0 (04cfa58)
+					\end{lstlisting}
+				\end{enumerate}
+				\item Para instalar Swarm simplemente hacemos un pull de la imagen de Swarm mediante Docker, la cual posteriormente instanciaremos y le añadiremos nodos con sus respectivos contenedores dentro de ellos.
+				\begin{lstlisting}[style=consola]
+$ docker pull swarm
+				\end{lstlisting}
+			\end{itemize}
+		
+			\subsubsection{Creación de un Swarm}
+			Hay que distinguir tres conceptos para comprender el funcionamiento de Docker Swarm. Son los siguientes:
+			\begin{itemize}
+				\item \textbf{Docker Node (Nodo Docker)}: una máquina ejecutando el demonio de Docker (la cual puede tener diferentes contenedores)
+				\item \textbf{Swarm Host (Anfitrión Swarm)}: Una máquina ejecutando el demonio de Swarm
+				\item \textbf{Swarm (Enjambre)}: Una serie de Nodos Docker
+			\end{itemize}
+			
+			La creación del Swarm se llevara a cabo desde el host Windows y no desde la VM con GNU/Linux. Esto es debido a que es necesario que el SO soporte tecnología de virtualización, y hacer que una VM soporte virtualizacián para crear más VMs dentro de ella es un proceso redundate e innecesario.
+			
+			De todas maneras el proceso de creación del Swarm es análogo, y en el caso de Windows, Docker Machine ya viene instalado como dependencia del Docker Toolbox, que es la herramienta mediante la que se instala todo el entorno de Docker en sistemas operativos Windows.
+			
+			Docker Toolbox se puede obtener para plataformas Mac y Windows desde el siguiente enlace: \url{https://www.docker.com/docker-toolbox}.
+			
+			Los pasos para crear un Swarm son los siguientes: \cite{docker-swarm-and-machine}
+			\begin{enumerate}
+				\item Vemos los host Docker de nuestro sistema.
+				\begin{lstlisting}[style=consola,numbers=left]
+$ docker-machine ls
+NAME      ACTIVE   URL          STATE     URL                         SWARM   DOCKER   ERRORS
+default   *        virtualbox   Running   tcp://192.168.99.100:2376           v1.9.1
+				\end{lstlisting}
+				En este caso vemos uno llamado \textit{default}. Ese es el que usa Docker para ejecutar Docker en Windows. En caso de usar Docker desde GNU/Linux ese host no se mostraría.
+			
+				\item Creamos una máquina virtual en VirtualBox llamada \textit{local}.
+				\begin{lstlisting}[style=consola,numbers=left]
+$ docker-machine create -d virtualbox local
+Running pre-create checks...
+Creating machine...
+(local) Copying C:\Users\ander\.docker\machine\cache\boot2docker.iso to C:\Users\ander\.docker\machine\machines\local\boot2docker.iso...
+(local) Creating VirtualBox VM...
+(local) Creating SSH key...
+(local) Starting the VM...
+(local) Waiting for an IP...
+Waiting for machine to be running, this may take a few minutes...
+Machine is running, waiting for SSH to be available...
+Detecting operating system of created instance...
+Detecting the provisioner...
+Provisioning with boot2docker...
+Copying certs to the local machine directory...
+Copying certs to the remote machine...
+Setting Docker configuration on the remote daemon...
+Checking connection to Docker...
+Docker is up and running!
+To see how to connect Docker to this machine, run: C:\Program Files\Docker Toolbox\docker-machine.exe env local
+				\end{lstlisting}
+
+				\item Cargamos la configuración de la maquina en la shell.
+				\begin{lstlisting}[style=consola,numbers=left]
+$ eval "$(docker-machine env local)"
+				\end{lstlisting}
+			
+				\item Generamos un \textit{discovery token} mediante la imagen de Swarm de Docker. Este token nos servira para gestionar el Swarm más adelante.
+			
+				El comando de abajo ejecuta el comando \textit{create} de Swarm en un contenedor. Descargará la imagen automáticamente en caso de no tenerla, como de costumbre.
+				
+				\begin{lstlisting}[style=consola,numbers=left]
+$ docker run swarm create
+Unable to find image 'swarm:latest' locally
+latest: Pulling from swarm
+d681c900c6e3: Pull complete
+188de6f24f3f: Pull complete
+90b2ffb8d338: Pull complete
+237af4efea94: Pull complete
+3b3fc6f62107: Pull complete
+7e6c9135b308: Pull complete
+986340ab62f0: Pull complete
+a9975e2cc0a3: Pull complete
+Digest: sha256:c21fd414b0488637b1f05f13a59b032a3f9da5d818d31da1a4ca98a84c0c781b
+Status: Downloaded newer image for swarm:latest
+dc60acd12fc3a6b14754abef91501be2
+				\end{lstlisting}
+			
+				\item Guarmamos el token que nos devuelve ya que lo necesitaremos para más adelante. En nuetro caso es dc60acd12fc3a6b14754abef91501be2.
+				
+				Si abrimos VirtualBox podremos observar que tenemos dos máquinas de tipo GNU/Linux, la que acabamos de crear y la que usa Docker para ejecutarse.
+				
+				\begin{figure}[H] % Con el parámetro H la imagens se muestra justo en el sitio en el que se ha definido
+					\centering
+					\includegraphics{VBoxSwarm}
+					\caption{Imágenes GNU/Linux creadas}
+					\label{fig:VBoxSwarm}
+				\end{figure}
+			
+			\end{enumerate}
+			
+			\subsubsection{Lanzar el \textit{Swarm manager}}
+			Para crear un Swarm, primero es necesario crear una maquina llamada \textit{Swarm manager}. El \textit{Swarm manager} dirige y maneja todos los contenedores del clúster, es decir, todos los Nodos Docker.
+			
+			Despues de crear el \textit{Swarm manager}, hay que crear una serie de Nodos Docker, que son los que se encargaran de ejecutar instancias de Docker y de manejar contenedores.
+			
+			A continuación vamos a crear un \textit{Swarm manager} y dos Nodos Docker. Para ello usamos el comando \textit{create} de Docker Machine, usando el token anotado anteriormente y diferentes flags que veremos a continuación.
+			
+			\begin{enumerate}
+				\item Creamos un Swarm manager bajo VirtualBox.
+				\begin{lstlisting}[style=consola,numbers=left]
+$ docker-machine create -d virtualbox --swarm --swarm-master --swarm-discovery token://dc60acd12fc3a6b
+14754abef91501be2 swarm-master
+Running pre-create checks...
+Creating machine...
+(swarm-master) Copying C:\Users\ander\.docker\machine\cache\boot2docker.iso to C:\Users\ander\.docker\machine\machines\swarm-master\boot2docker.iso...
+(swarm-master) Creating VirtualBox VM...
+(swarm-master) Creating SSH key...
+(swarm-master) Starting the VM...
+(swarm-master) Waiting for an IP...
+Waiting for machine to be running, this may take a few minutes...
+Machine is running, waiting for SSH to be available...
+Detecting operating system of created instance...
+Detecting the provisioner...
+Provisioning with boot2docker...
+Copying certs to the local machine directory...
+Copying certs to the remote machine...
+Setting Docker configuration on the remote daemon...
+Configuring swarm...
+Checking connection to Docker...
+Docker is up and running!
+To see how to connect Docker to this machine, run: C:\Program Files\Docker Toolbox\docker-machine.exe env swarm-master
+				\end{lstlisting}
+				
+				Para indicar que es el Swarm manager usamos el flag \textit{--swarm-master}.
+				
+				\item Creamos un nodo Swarm. Lo llamaremos \textit{swarm-agent-00}.
+				\begin{lstlisting}[style=consola,numbers=left]
+$ docker-machine create -d virtualbox --swarm --swarm-discovery token://dc60acd12fc3a6b14754abef91501b
+e2 swarm-agent-00
+Running pre-create checks...
+Creating machine...
+(swarm-agent-00) Copying C:\Users\ander\.docker\machine\cache\boot2docker.iso to C:\Users\ander\.docker\machine\machines\swarm-agent-00\boot2docker.iso...
+(swarm-agent-00) Creating VirtualBox VM...
+(swarm-agent-00) Creating SSH key...
+(swarm-agent-00) Starting the VM...
+(swarm-agent-00) Waiting for an IP...
+Waiting for machine to be running, this may take a few minutes...
+Machine is running, waiting for SSH to be available...
+Detecting operating system of created instance...
+Detecting the provisioner...
+Provisioning with boot2docker...
+Copying certs to the local machine directory...
+Copying certs to the remote machine...
+Setting Docker configuration on the remote daemon...
+Configuring swarm...
+Checking connection to Docker...
+Docker is up and running!
+To see how to connect Docker to this machine, run: C:\Program Files\Docker Toolbox\docker-machine.exe env swarm-agent-00
+				\end{lstlisting}
+
+				\item Creamos otro nodo Swarm. Lo llamaremos \textit{swarm-agent-01}.
+				\begin{lstlisting}[style=consola,numbers=left]
+$ docker-machine create -d virtualbox --swarm --swarm-discovery token://dc60acd12fc3a6b14754abef91501b
+e2 swarm-agent-01
+Running pre-create checks...
+Creating machine...
+(swarm-agent-01) Copying C:\Users\ander\.docker\machine\cache\boot2docker.iso to C:\Users\ander\.docker\machine\machines\swarm-agent-01\boot2docker.iso...
+(swarm-agent-01) Creating VirtualBox VM...
+(swarm-agent-01) Creating SSH key...
+(swarm-agent-01) Starting the VM...
+(swarm-agent-01) Waiting for an IP...
+Waiting for machine to be running, this may take a few minutes...
+Machine is running, waiting for SSH to be available...
+Detecting operating system of created instance...
+Detecting the provisioner...
+Provisioning with boot2docker...
+Copying certs to the local machine directory...
+Copying certs to the remote machine...
+Setting Docker configuration on the remote daemon...
+Configuring swarm...
+Checking connection to Docker...
+Docker is up and running!
+To see how to connect Docker to this machine, run: C:\Program Files\Docker Toolbox\docker-machine.exe env swarm-agent-01
+				\end{lstlisting}
+	
+				\item Si miramos de nuevo en VirtualBox, veremos que tenemos las 3 nuevas máquinas que acabamos de crear junto a las dos que teníamos anteriormente.
+				
+				\begin{figure}[H] % Con el parámetro H la imagens se muestra justo en el sitio en el que se ha definido
+					\centering
+					\includegraphics{VBoxSwarm2}
+					\caption{Imágenes GNU/Linux creadas para el Swarm}
+					\label{fig:VBoxSwarm2}
+				\end{figure}
+				
+			\end{enumerate}
+			
+			\subsubsection{Configurar el Swarm y lanzar contenedores}
+			
+			\begin{enumerate}
+				\item Apuntamos nuestro entorno Docker a la máquina que está ejecutando el Swarm master.
+				\begin{lstlisting}[style=consola,numbers=left]
+$ eval $(docker-machine env --swarm swarm-master)
+				\end{lstlisting}
+				
+				\item Obtenemos informacion sobre el Swarm creado mediante el comando \textit{info} de Docker.
+				\begin{lstlisting}[style=consola,numbers=left]
+$ docker info
+Containers: 4
+Images: 3
+Role: primary
+Strategy: spread
+Filters: health, port, dependency, affinity, constraint
+Nodes: 3
+ swarm-agent-00: 192.168.99.103:2376
+   Status: Healthy
+   Containers: 1
+   Reserved CPUs: 0 / 1
+   Reserved Memory: 0 B / 1.021 GiB
+   Labels: executiondriver=native-0.2, kernelversion=4.1.13-boot2docker, operatingsystem=Boot2Docker 1.9.1 (TCL 6.4.1); master : cef800b - Fri Nov 20 19:33:59 UTC 2015, provider=virtualbox, storagedriver=aufs
+ swarm-agent-01: 192.168.99.104:2376
+   Status: Healthy
+   Containers: 1
+   Reserved CPUs: 0 / 1
+   Reserved Memory: 0 B / 1.021 GiB
+   Labels: executiondriver=native-0.2, kernelversion=4.1.13-boot2docker, operatingsystem=Boot2Docker 1.9.1 (TCL 6.4.1); master : cef800b - Fri Nov 20 19:33:59 UTC 2015, provider=virtualbox, storagedriver=aufs
+ swarm-master: 192.168.99.102:2376
+   Status: Healthy
+   Containers: 2
+   Reserved CPUs: 0 / 1
+   Reserved Memory: 0 B / 1.021 GiB
+   Labels: executiondriver=native-0.2, kernelversion=4.1.13-boot2docker, operatingsystem=Boot2Docker 1.9.1 (TCL 6.4.1); master : cef800b - Fri Nov 20 19:33:59 UTC 2015, provider=virtualbox, storagedriver=aufs
+CPUs: 3
+Total Memory: 3.064 GiB
+Name: swarm-master
+				\end{lstlisting}
+				
+				Se puede observar que tanto el manager como lon nodos tienen el puerto 2376 expuesto. Cuando se crea un Swarm se puede usar el puerto que se quiera, e incluso usar diferentes puertos para diferentes nodos. Cada nodo del Swarm ejecuta un gestor de contenedores Docker.
+				
+				En el caso del master, ejecuta tanto el gestor de contenedores como el Swarm manager. Esto no suele ser recomendable en entornos de producción.
+				
+				\item Consultamos las imágenes en ejecución en el Swarm.
+				\begin{lstlisting}[style=consola,numbers=left]
+$ docker ps -a
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+3f228154f8ff        swarm:latest        "/swarm join --advert"   20 minutes ago      Up 20 minutes                           swarm-agent-01/swarm-agent
+e9df36929545        swarm:latest        "/swarm join --advert"   22 minutes ago      Up 22 minutes                           swarm-agent-00/swarm-agent
+a18b76c0013d        swarm:latest        "/swarm join --advert"   27 minutes ago      Up 27 minutes                           swarm-master/swarm-agent
+35fcf51df08a        swarm:latest        "/swarm manage --tlsv"   27 minutes ago      Up 27 minutes                           swarm-master/swarm-agent-master
+				\end{lstlisting}
+				
+				\item Lanzamos una imagen en el Swarm. Vamos a usar la ya conocida \textit{hello-world}.
+				\begin{lstlisting}[style=consola,numbers=left]
+$ docker run hello-world
+
+Hello from Docker.
+This message shows that your installation appears to be working correctly.
+
+To generate this message, Docker took the following steps:
+1. The Docker client contacted the Docker daemon.
+2. The Docker daemon pulled the "hello-world" image from the Docker Hub.
+3. The Docker daemon created a new container from that image which runs the
+executable that produces the output you are currently reading.
+4. The Docker daemon streamed that output to the Docker client, which sent it
+to your terminal.
+
+To try something more ambitious, you can run an Ubuntu container with:
+$ docker run -it ubuntu bash
+
+Share images, automate workflows, and more with a free Docker Hub account:
+https://hub.docker.com
+
+For more examples and ideas, visit:
+https://docs.docker.com/userguide/
+				\end{lstlisting}
+				
+				\item Vamos a usar el comando \textit{ps} de Docker para ver en que nodo se ha ejecutado el contenedor.
+				\begin{lstlisting}[style=consola,numbers=left]
+$ docker ps -a
+CONTAINER ID        IMAGE               NAMES
+91a89b22a8b1        hello-world         swarm-agent-00/sleepy_perlman
+3f228154f8ff        swarm:latest        swarm-agent-01/swarm-agent
+e9df36929545        swarm:latest        swarm-agent-00/swarm-agent
+a18b76c0013d        swarm:latest        swarm-master/swarm-agent
+35fcf51df08a        swarm:latest        swarm-master/swarm-agent-master
+				\end{lstlisting}
+				
+				Como se puede observar se ha ejecutado en el nodo \textit{swarm-agent-00}.
+			\end{enumerate}
+			
+			Una vez visto el funcionamiento de Swarm y las redes Multi-Host en Docker, podemos complicar nuestro sistema tanto como queramos. Podemos lanzar diferentes nodos en diferentes sistemas separados dentro de una misma red o entre diferentes redes conectadas entre sí. En la documentación de Swarm \cite{docker-swarm} se puede encontrar más información al respecto.	
 	
 	\section{Configuración manual de redes}
 	Aunque en este capítulo se han enseñado varios mecanismos que provee Docker para administrar redes de contenedores, también podemos configurar toda nuestra red de una manera más tradicional, mediante la modificación de archivos como \emph{/etc/hosts} o \emph{/etc/interfaces} en nuestros contenedores, el uso de \emph{Iptables}, configuración de DNS,... 
